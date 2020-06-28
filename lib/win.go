@@ -18,6 +18,7 @@ type WinAPI interface {
 	CreateThread(ptr Pointer) (uintptr, error)
 	WaitForSingleObject(handle uintptr) error
 	CloseHandle(handle uintptr)
+	VirtualProtect(ptr uintptr, size uintptr, exec, write bool) error
 }
 
 type Win struct {
@@ -28,7 +29,8 @@ func (w *Win) VirtualAlloc(size uint) (Pointer, error) {
 		uintptr(0),
 		uintptr(size),
 		uintptr(0x00001000|0x00002000), // MEM_COMMIT | MEM_RESERVE
-		uintptr(0x40))                  // PAGE_EXECUTE_READWRITE
+		uintptr(0x04))                  // PAGE_READWRITE
+	//uintptr(0x40))                  // PAGE_EXECUTE_READWRITE
 
 	if err != syscall.Errno(0) {
 		return nil, err
@@ -116,6 +118,25 @@ func (w *Win) WaitForSingleObject(handle uintptr) error {
 	_, _, err := waitForSingleObject.Call(
 		handle,
 		syscall.INFINITE)
+	if err != syscall.Errno(0) {
+		return err
+	}
+	return nil
+}
+func (w *Win) VirtualProtect(ptr uintptr, size uintptr, exec, write bool) error {
+	var empty uint32
+	flag := 0x02
+	if exec {
+		flag = 0x20
+	}
+	if write {
+		flag = 0x04
+	}
+	_, _, err := virtualProtect.Call(
+		ptr,
+		size,
+		uintptr(flag),
+		ptrValue(Pointer(&empty)))
 	if err != syscall.Errno(0) {
 		return err
 	}
@@ -212,6 +233,5 @@ var (
 	getProcAddress          = kernel32.MustFindProc("GetProcAddress")
 	createThread            = kernel32.MustFindProc("CreateThread")
 	waitForSingleObject     = kernel32.MustFindProc("WaitForSingleObject")
-	rtlCopyMemory           = ntdll.MustFindProc("RtlCopyMemory")
 	ntFlushInstructionCache = ntdll.MustFindProc("NtFlushInstructionCache")
 )

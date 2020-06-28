@@ -11,21 +11,21 @@ import (
 
 var (
 	path  string
-	debug bool
+	debug int64
 )
 
 func init() {
+	debugLevels := map[int64]log.Level{0: log.WarnLevel, 1: log.InfoLevel, 2: log.DebugLevel}
+
 	flag.StringVar(&path, "path", "", "URL or local path of a PE file")
-	flag.BoolVar(&debug, "debug", false, "Show debug & info logs")
+	flag.Int64Var(&debug, "debug", 0, "1: show info logs. 2 show debug logs")
 	flag.Parse()
 	if path == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	log.SetLevel(log.WarnLevel)
-	if debug {
-		log.SetLevel(log.DebugLevel)
-	}
+	log.SetLevel(debugLevels[debug])
+
 }
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 		log.Fatalf("Could not load binary from %s: %s", path, err)
 	}
 
-	err = lib.LoadInMemory()
+	err = lib.AllocateMemory()
 	if err != nil {
 		log.Fatalf("Could not allocate new memory for binary : %s", err)
 	}
@@ -45,5 +45,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not copy data to new memory location : %s", err)
 	}
+	err = lib.FixOffsets()
+	if err != nil {
+		log.Fatalf("Could not fix some offsets : %s", err)
+	}
+
+	lib.Execute()
 
 }

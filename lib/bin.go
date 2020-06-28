@@ -18,6 +18,7 @@ type BinAPI interface {
 	GetFirstImport() *ImageImportDescriptor
 	GetImageBase() uintptr
 	GetModules() []Module
+	GetSections() []Section
 	GetRelocAddr() *ImageBaseRelocation
 	GetDebugAddr() *DebugDirectory
 	AddModule(ptr Pointer, name string, importAddress *ImageImportDescriptor)
@@ -42,6 +43,7 @@ type Section struct {
 	RVA     uintptr // Relative Virtual address
 	RRA     uintptr // Relative Raw address
 	Size    uint
+	MemFlag uint8
 }
 type Module struct {
 	Name                  string
@@ -147,6 +149,9 @@ func (c *Bin) GetSizeOptionalHeader() uintptr {
 }
 func (c *Bin) GetModules() []Module {
 	return c.Modules
+}
+func (c *Bin) GetSections() []Section {
+	return c.Sections
 }
 
 func (c *Bin) GetEntryPoint() Pointer {

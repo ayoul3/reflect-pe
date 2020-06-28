@@ -1,7 +1,10 @@
 package lib
 
 import (
+	"errors"
 	"io/ioutil"
+	"net/http"
+	"strings"
 
 	. "unsafe"
 
@@ -18,12 +21,36 @@ func NewWinAPI() *Win {
 	return &Win{}
 }
 
-func NewBinaryFromPath(path string) (*Bin, error) {
+func NewBinaryFromDisk(path string) (*Bin, error) {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
+	if dat[0] != 77 || dat[1] != 90 {
+		return nil, errors.New("Not a valid PE file")
+	}
 	return &Bin{Address: Pointer(&dat[0])}, nil
+}
+
+func NewBinaryFromHTTP(path string) (*Bin, error) {
+	var body []byte
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", path, nil)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err = ioutil.ReadAll(resp.Body)
+
+	return &Bin{Address: Pointer(&body[0])}, nil
+}
+
+func NewBinaryFromPath(path string) (*Bin, error) {
+	if strings.HasPrefix(strings.ToLower(path), "http") {
+		return NewBinaryFromHTTP(path)
+	}
+	return NewBinaryFromDisk(path)
 }
 
 func NewBinary(api *Win, size uint) (*Bin, error) {
@@ -34,7 +61,7 @@ func NewBinary(api *Win, size uint) (*Bin, error) {
 	return &Bin{Address: Pointer(addr)}, nil
 }
 
-func LoadInMemory() (err error) {
+func AllocateMemory() (err error) {
 	log.Infof("Loaded initial binary at address 0x%x", Binary.Address)
 
 	PreparePEHeaders(Binary)
@@ -56,15 +83,31 @@ func CopyData() (err error) {
 	PreparePEHeaders(Final)
 
 	CopySections(Wapi, Binary, Final)
+	log.Infof("Copied %d sections to new location", len(Final.Sections))
 
 	LoadLibraries(Wapi, Final)
+	log.Infof("Loaded %d DLLs", len(Final.Modules))
 
 	LoadFunctions(Wapi, Final)
+	log.Infof("Loaded their functions")
 
+	return nil
+}
+
+func FixOffsets() (err error) {
 	FixRelocations(Wapi, Final)
 
 	FixDebugSymbols(Wapi, Final)
 
+	return nil
+}
+
+func Execute() (err error) {
+
+	UpdateSectionProtections(Wapi, Final)
+	log.Infof("Updated memory protections")
+
+	log.Infof("Jumping to entry point %x", Final.GetEntryPoint())
 	StartThread(Wapi, Final)
 
 	return nil
