@@ -45,6 +45,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not copy data to new memory location : %s", err)
 	}
+
 	err = lib.FixOffsets()
 	if err != nil {
 		log.Fatalf("Could not fix some offsets : %s", err)

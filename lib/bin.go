@@ -24,6 +24,7 @@ type BinAPI interface {
 	AddModule(ptr Pointer, name string, importAddress *ImageImportDescriptor)
 	TranslateToRVA(rawAddr uintptr) uintptr
 	GetEntryPoint() Pointer
+	IsDynamic() bool
 }
 
 type Bin struct {
@@ -55,6 +56,16 @@ type Module struct {
 func (c *Bin) Is64() bool {
 	val := c.FileHeader.Machine
 	return val == 0x8664 || val == 0xaa64 || val == 0x200
+}
+
+func (c *Bin) IsDynamic() bool {
+	var dllCharacteristics uint16
+	if c.Is64() {
+		dllCharacteristics = c.OptionalHeader64.DllCharacteristics
+	} else {
+		dllCharacteristics = c.OptionalHeader32.DllCharacteristics
+	}
+	return dllCharacteristics&0x0040 == 0x0040
 }
 
 func (c *Bin) FillFileHeader() {

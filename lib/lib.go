@@ -85,19 +85,30 @@ func CopyData() (err error) {
 	CopySections(Wapi, Binary, Final)
 	log.Infof("Copied %d sections to new location", len(Final.Sections))
 
-	LoadLibraries(Wapi, Final)
+	err = LoadLibraries(Wapi, Final)
+	if err != nil {
+		return err
+	}
 	log.Infof("Loaded %d DLLs", len(Final.Modules))
 
-	LoadFunctions(Wapi, Final)
+	err = LoadFunctions(Wapi, Final)
+	if err != nil {
+		return err
+	}
 	log.Infof("Loaded their functions")
 
 	return nil
 }
 
 func FixOffsets() (err error) {
-	FixRelocations(Wapi, Final)
-
 	FixDebugSymbols(Wapi, Final)
+
+	if Final.IsDynamic() {
+		FixRelocations(Wapi, Final)
+	} else {
+		log.Infof("Static pe file - Manually fixing offsets")
+		FixingHardcodedOffsets(Wapi, Final)
+	}
 
 	return nil
 }
@@ -108,7 +119,10 @@ func Execute() (err error) {
 	log.Infof("Updated memory protections")
 
 	log.Infof("Jumping to entry point %x", Final.GetEntryPoint())
-	StartThread(Wapi, Final)
+	err = StartThread(Wapi, Final)
+	if err != nil {
+		log.Fatalf("Error creating thread %s", err)
+	}
 
 	return nil
 }

@@ -222,6 +222,29 @@ func UpdateSectionProtections(api WinAPI, bin BinAPI) (err error) {
 	}
 	return nil
 }
+
+func FixOffsetsInSection(api WinAPI, bin BinAPI, section Section) {
+	var rDataptr Pointer
+	offset := section.RVA
+	oldBaseAddress := bin.GetImageBase()
+
+	for i := uintptr(0); i < uintptr(section.Size); i += Sizeof(uint(0)) {
+		rDataptr = ptrOffset(Pointer(bin.GetAddr()), offset+i)
+		//fmt.Printf("%s - %x: %x\n", section.Name, rDataptr, *(*uintptr)(rDataptr))
+		val := *(*uintptr)(rDataptr)
+
+		if val&oldBaseAddress == oldBaseAddress && val-oldBaseAddress < 0xFFFF {
+			*(*uintptr)(rDataptr) = val - oldBaseAddress + bin.GetAddr()
+			log.Debugf("%s: Updated from %x to %x at %x\n", section.Name, val, *(*uintptr)(rDataptr), rDataptr)
+		}
+	}
+	//os.Exit(0)
+}
+func FixingHardcodedOffsets(api WinAPI, bin BinAPI) {
+	for _, section := range bin.GetSections() {
+		FixOffsetsInSection(api, bin, section)
+	}
+}
 func StartThread(api WinAPI, bin BinAPI) (err error) {
 	entryPoint := bin.GetEntryPoint()
 	//*(*uint32)(entryPoint) = 0xCCCCCCCC
