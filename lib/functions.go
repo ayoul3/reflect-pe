@@ -59,10 +59,11 @@ func LoadLibraries(api WinAPI, bin BinAPI) (err error) {
 		}
 		ptrLibraryName := bin.GetAddr() + uintptr(importAddress.Name)
 		libraryName := api.CstrVal(Pointer(ptrLibraryName))
-		ptrLibrary, err := api.LoadLibrary(ptrLibraryName)
+		ptrLibrary, err := api.LoadLibrary(string(libraryName[:]))
 		if err != nil {
-			return err
+			return fmt.Errorf("Could not load %s - %s", string(libraryName[:]), err)
 		}
+
 		log.Debugf("Loaded library %s at 0x%x", string(libraryName[:]), ptrLibrary)
 		bin.AddModule(ptrLibrary, string(libraryName[:]), importAddress)
 		importAddress = (*ImageImportDescriptor)(ptrOffset(Pointer(importAddress), Sizeof(*importAddress)))
@@ -246,8 +247,8 @@ func FixingHardcodedOffsets(api WinAPI, bin BinAPI) {
 	}
 }
 func StartThread(api WinAPI, bin BinAPI) (err error) {
+
 	entryPoint := bin.GetEntryPoint()
-	//*(*uint32)(entryPoint) = 0xCCCCCCCC
 
 	api.NtFlushInstructionCache(bin.GetAddr())
 

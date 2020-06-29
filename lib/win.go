@@ -9,7 +9,7 @@ type WinAPI interface {
 	Memcopy(start, end, size uintptr)
 	VirtualAlloc(size uint) (Pointer, error)
 	CstrVal(ptr Pointer) (out []byte)
-	LoadLibrary(ptrName uintptr) (Pointer, error)
+	LoadLibrary(ptrName string) (Pointer, error)
 	GetProcAddress(libraryAddress, ptrName Pointer) (uintptr, error)
 	Incr64(src Pointer, val uint64)
 	Incr32(src Pointer, val uint32)
@@ -68,13 +68,15 @@ func (w *Win) CstrVal(ptr Pointer) (out []byte) {
 	return out
 }
 
-func (w *Win) LoadLibrary(ptrName uintptr) (Pointer, error) {
-	ret, _, err := loadLibrary.Call(ptrName)
+func (w *Win) LoadLibrary(name string) (Pointer, error) {
+	ret, err := syscall.LoadDLL(name)
+
+	/*ret, _, err := loadLibrary.Call(ptrName)
 
 	if err != syscall.Errno(0) {
 		return nil, err
-	}
-	return Pointer(ret), nil
+	}*/
+	return Pointer(ret.Handle), err
 }
 
 func (w *Win) GetProcAddress(libraryAddress, ptrName Pointer) (uintptr, error) {
@@ -229,7 +231,6 @@ var (
 	ntdll                   = syscall.MustLoadDLL("ntdll.dll")
 	virtualAlloc            = kernel32.MustFindProc("VirtualAlloc")
 	virtualProtect          = kernel32.MustFindProc("VirtualProtect")
-	loadLibrary             = kernel32.MustFindProc("LoadLibraryA")
 	getProcAddress          = kernel32.MustFindProc("GetProcAddress")
 	createThread            = kernel32.MustFindProc("CreateThread")
 	waitForSingleObject     = kernel32.MustFindProc("WaitForSingleObject")
