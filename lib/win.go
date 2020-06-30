@@ -19,6 +19,7 @@ type WinAPI interface {
 	WaitForSingleObject(handle uintptr) error
 	CloseHandle(handle uintptr)
 	VirtualProtect(ptr uintptr, size uintptr, exec, write bool) error
+	ResumeThread(addr uintptr) error
 }
 
 type Win struct {
@@ -109,6 +110,13 @@ func (w *Win) CreateThread(ptr Pointer) (uintptr, error) {
 		return 0, err
 	}
 	return ret, nil
+}
+func (w *Win) ResumeThread(addr uintptr) error {
+	_, _, err := resumeThread.Call(addr)
+	if err != syscall.Errno(0) {
+		return err
+	}
+	return nil
 }
 
 func (w *Win) WaitForSingleObject(handle uintptr) error {
