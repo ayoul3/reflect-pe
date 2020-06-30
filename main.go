@@ -10,27 +10,29 @@ import (
 )
 
 var (
-	path  string
-	debug int64
+	path       string
+	debugLevel int64
 )
 
 func init() {
+
 	debugLevels := map[int64]log.Level{0: log.WarnLevel, 1: log.InfoLevel, 2: log.DebugLevel}
 
 	flag.StringVar(&path, "path", "", "URL or local path of a PE file")
-	flag.Int64Var(&debug, "debug", 2, "1: show info logs. 2 show debug logs")
+	flag.Int64Var(&debugLevel, "debug", 2, "1: show info logs. 2 show debug logs")
 	flag.Parse()
 	path = "C:\\dont_scan\\mylove.exe"
 	if path == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	log.SetLevel(debugLevels[debug])
+	log.SetLevel(debugLevels[debugLevel])
 
 }
 
 func main() {
 	var err error
+
 	lib.Wapi = lib.NewWinAPI()
 	lib.Binary, err = lib.NewBinaryFromPath(path)
 	if err != nil {

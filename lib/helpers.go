@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"math/rand"
 	. "unsafe"
 )
 
@@ -27,4 +28,8 @@ func addrOffset(addr uintptr, offset uintptr) Pointer {
 func isMSBSet(num uint) bool {
 	uintSize := 32 << (^uint(0) >> 32 & 1)
 	return num>>(uintSize-1) == 1
+}
+
+func randInt(min, max int) int {
+	return rand.Intn(max-min) + min
 }

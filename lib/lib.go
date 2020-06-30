@@ -115,13 +115,13 @@ func FixOffsets() (err error) {
 
 func Execute() (err error) {
 
-	//*(*uint32)(ptrOffset(Final.GetEntryPoint(), 0x12)) = 0xCC
+	//*(*uint8)(Final.GetEntryPoint()) = 0xCC
 
 	UpdateSectionProtections(Wapi, Final)
 	log.Infof("Updated memory protections")
 
 	log.Infof("Jumping to entry point %x", Final.GetEntryPoint())
-	err = StartThread(Wapi, Final)
+	err = StartThreadWait(Wapi, Final)
 	if err != nil {
 		log.Fatalf("Error creating thread %s", err)
 	}

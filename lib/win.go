@@ -14,7 +14,7 @@ type WinAPI interface {
 	Incr64(src Pointer, val uint64)
 	Incr32(src Pointer, val uint32)
 	Incr16(src Pointer, val uint16)
-	NtFlushInstructionCache(ptr uintptr) error
+	NtFlushInstructionCache(ptr, size uintptr) error
 	CreateThread(ptr Pointer) (uintptr, error)
 	WaitForSingleObject(handle uintptr) error
 	CloseHandle(handle uintptr)
@@ -71,11 +71,6 @@ func (w *Win) CstrVal(ptr Pointer) (out []byte) {
 func (w *Win) LoadLibrary(name string) (Pointer, error) {
 	ret, err := syscall.LoadDLL(name)
 
-	/*ret, _, err := loadLibrary.Call(ptrName)
-
-	if err != syscall.Errno(0) {
-		return nil, err
-	}*/
 	return Pointer(ret.Handle), err
 }
 
@@ -90,11 +85,11 @@ func (w *Win) GetProcAddress(libraryAddress, ptrName Pointer) (uintptr, error) {
 	return ret, nil
 }
 
-func (w *Win) NtFlushInstructionCache(ptr uintptr) error {
+func (w *Win) NtFlushInstructionCache(ptr, size uintptr) error {
 	_, _, err := ntFlushInstructionCache.Call(
-		ptr,
 		uintptr(0),
-		uintptr(0))
+		ptr,
+		size)
 
 	if err != syscall.Errno(0) {
 		return err
@@ -108,7 +103,7 @@ func (w *Win) CreateThread(ptr Pointer) (uintptr, error) {
 		uintptr(0),
 		ptrValue(ptr),
 		uintptr(0),
-		uintptr(0),
+		uintptr(0x00000004),
 		uintptr(0))
 	if err != syscall.Errno(0) {
 		return 0, err
@@ -233,6 +228,7 @@ var (
 	virtualProtect          = kernel32.MustFindProc("VirtualProtect")
 	getProcAddress          = kernel32.MustFindProc("GetProcAddress")
 	createThread            = kernel32.MustFindProc("CreateThread")
+	resumeThread            = kernel32.MustFindProc("ResumeThread")
 	waitForSingleObject     = kernel32.MustFindProc("WaitForSingleObject")
 	ntFlushInstructionCache = ntdll.MustFindProc("NtFlushInstructionCache")
 )
