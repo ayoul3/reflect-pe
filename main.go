@@ -1,32 +1,19 @@
 package main
 
 import (
-	"flag"
-	"os"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ayoul3/reflect-pe/lib"
 )
 
 var (
-	path       string
-	debugLevel int64
+	config *lib.Configuration
 )
 
 func init() {
 
-	debugLevels := map[int64]log.Level{0: log.WarnLevel, 1: log.InfoLevel, 2: log.DebugLevel}
-
-	flag.StringVar(&path, "path", "", "URL or local path of a PE file")
-	flag.Int64Var(&debugLevel, "debug", 2, "1: show info logs. 2 show debug logs")
-	flag.Parse()
-	path = "C:\\dont_scan\\mylove.exe"
-	if path == "" {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-	log.SetLevel(debugLevels[debugLevel])
+	config = lib.GetConfig()
+	config.SetLogLevel()
 
 }
 
@@ -34,9 +21,9 @@ func main() {
 	var err error
 
 	lib.Wapi = lib.NewWinAPI()
-	lib.Binary, err = lib.NewBinaryFromPath(path)
+	lib.Binary, err = lib.NewBinaryFromPath(config.BinaryPath)
 	if err != nil {
-		log.Fatalf("Could not load binary from %s: %s", path, err)
+		log.Fatalf("Could not load binary from %s: %s", config.BinaryPath, err)
 	}
 
 	err = lib.AllocateMemory()
