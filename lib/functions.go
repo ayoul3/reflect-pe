@@ -2,6 +2,7 @@ package lib
 
 import (
 	"debug/pe"
+	"encoding/hex"
 	"fmt"
 	"time"
 	. "unsafe"
@@ -266,6 +267,50 @@ func StartThreadWait(api WinAPI, bin BinAPI) (err error) {
 	api.ResumeThread(r1)
 	api.WaitForSingleObject(r1)
 	api.CloseHandle(r1)
+
+	return nil
+}
+
+func PrepareJumper(api WinAPI, entryPoint Pointer) (Pointer, error) {
+	opcode := fmt.Sprintf("48B8%xffd0", intToByteArray(ptrValue(entryPoint)))
+
+	sc, err := hex.DecodeString(opcode)
+	if err != nil {
+		return nil, err
+	}
+	addr, err := api.VirtualAlloc(16)
+	if err != nil {
+		return nil, err
+	}
+	if err = api.VirtualProtect(ptrValue(addr), 16, false, true); err != nil {
+		return nil, err
+	}
+	api.Memcopy(uintptr(Pointer(&sc[0])), ptrValue(addr), uintptr(len(sc)))
+	if err = api.VirtualProtect(ptrValue(addr), 16, true, false); err != nil {
+		return nil, err
+	}
+
+	return addr, err
+}
+
+func StartThread(api WinAPI, bin BinAPI) (err error) {
+
+	entryPoint := bin.GetEntryPoint()
+	addr, err := PrepareJumper(api, entryPoint)
+	if err != nil {
+		return err
+	}
+	f := func() {}
+
+	err = api.VirtualProtect(*(*uintptr)(Pointer(&f)), Sizeof(uintptr(0)), false, true)
+	fmt.Println(err)
+	fmt.Printf("%x: %x\n", *(*uintptr)(Pointer(&f)), **(**uintptr)(Pointer(&f)))
+
+	//**(**uintptr)(Pointer(&f)) = *(*uintptr)(Pointer(&entryPoint))
+	**(**uintptr)(Pointer(&f)) = (uintptr)(addr)
+	fmt.Printf("%x: %x\n", *(*uintptr)(Pointer(&f)), **(**uintptr)(Pointer(&f)))
+
+	f()
 
 	return nil
 }

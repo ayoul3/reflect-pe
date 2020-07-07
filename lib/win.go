@@ -20,6 +20,7 @@ type WinAPI interface {
 	CloseHandle(handle uintptr)
 	VirtualProtect(ptr uintptr, size uintptr, exec, write bool) error
 	ResumeThread(addr uintptr) error
+	ReadBytes(ptr Pointer, size uint) (out []byte)
 }
 
 type Win struct {
@@ -31,7 +32,6 @@ func (w *Win) VirtualAlloc(size uint) (Pointer, error) {
 		uintptr(size),
 		uintptr(0x00001000|0x00002000), // MEM_COMMIT | MEM_RESERVE
 		uintptr(0x04))                  // PAGE_READWRITE
-	//uintptr(0x40))                  // PAGE_EXECUTE_READWRITE
 
 	if err != syscall.Errno(0) {
 		return nil, err
@@ -39,9 +39,9 @@ func (w *Win) VirtualAlloc(size uint) (Pointer, error) {
 	return Pointer(ret), nil
 }
 
-func (w *Win) Memcopy(start, end, size uintptr) {
-	for i := uintptr(0); i < size; i += Sizeof(uint(0)) {
-		*(*uint)(Pointer(end + i)) = *(*uint)(Pointer(start + i))
+func (w *Win) Memcopy(src, dst, size uintptr) {
+	for i := uintptr(0); i < size; i++ {
+		*(*uint8)(Pointer(dst + i)) = *(*uint8)(Pointer(src + i))
 	}
 }
 
@@ -63,6 +63,17 @@ func (w *Win) CstrVal(ptr Pointer) (out []byte) {
 		if byteVal == 0x00 {
 			break
 		}
+		out = append(out, byteVal)
+		ptr = ptrOffset(ptr, 1)
+	}
+	return out
+}
+
+func (w *Win) ReadBytes(ptr Pointer, size uint) (out []byte) {
+	var byteVal byte
+	out = make([]byte, 0)
+	for i := uint(0); i < size; i++ {
+		byteVal = *(*byte)(Pointer(ptr))
 		out = append(out, byteVal)
 		ptr = ptrOffset(ptr, 1)
 	}

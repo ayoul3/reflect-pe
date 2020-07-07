@@ -33,3 +33,22 @@ func isMSBSet(num uint) bool {
 func randInt(min, max int) int {
 	return rand.Intn(max-min) + min
 }
+
+func reverse(s string) string {
+	rns := []rune(s)
+	for i, j := 0, len(rns)-1; i < j; i, j = i+1, j-1 {
+		rns[i], rns[j] = rns[j], rns[i]
+	}
+
+	return string(rns)
+}
+
+func intToByteArray(num uintptr) []byte {
+	size := int(Sizeof(num))
+	arr := make([]byte, size)
+	for i := 0; i < size; i++ {
+		byt := *(*uint8)(Pointer(uintptr(Pointer(&num)) + uintptr(i)))
+		arr[i] = byt
+	}
+	return arr
+}

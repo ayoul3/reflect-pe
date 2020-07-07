@@ -1,2 +1,3 @@
 BinaryPath: 'C:\dont_scan\mylove.exe'
-LogLevel: 1
+#BinaryPath: 'res\sock_static_file.exe'
+LogLevel: 2
