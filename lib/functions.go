@@ -253,6 +253,7 @@ func FixingHardcodedOffsets(api WinAPI, bin BinAPI) {
 func StartThreadWait(api WinAPI, bin BinAPI) (err error) {
 
 	entryPoint := bin.GetEntryPoint()
+	log.Infof("Getting entry point %x", entryPoint)
 
 	api.NtFlushInstructionCache(bin.GetAddr(), bin.GetImageBase())
 
@@ -294,22 +295,25 @@ func PrepareJumper(api WinAPI, entryPoint Pointer) (Pointer, error) {
 }
 
 func StartThread(api WinAPI, bin BinAPI) (err error) {
-
+	f := func() {}
 	entryPoint := bin.GetEntryPoint()
 	addr, err := PrepareJumper(api, entryPoint)
 	if err != nil {
 		return err
 	}
-	f := func() {}
 
-	err = api.VirtualProtect(*(*uintptr)(Pointer(&f)), Sizeof(uintptr(0)), false, true)
-	fmt.Println(err)
-	fmt.Printf("%x: %x\n", *(*uintptr)(Pointer(&f)), **(**uintptr)(Pointer(&f)))
+	log.Debugf("Prepared stub at 0x%x to jump to entry point 0x%x", addr, entryPoint)
+	if err = api.VirtualProtect(*(*uintptr)(Pointer(&f)), Sizeof(uintptr(0)), false, true); err != nil {
+		return err
+	}
 
-	//**(**uintptr)(Pointer(&f)) = *(*uintptr)(Pointer(&entryPoint))
 	**(**uintptr)(Pointer(&f)) = (uintptr)(addr)
-	fmt.Printf("%x: %x\n", *(*uintptr)(Pointer(&f)), **(**uintptr)(Pointer(&f)))
+	log.Debugf("Overwrote function address at 0x%x with stub address 0x%x", *(*uintptr)(Pointer(&f)), addr)
 
+	//fmt.Fprintln(os.Stdin, "coffee")
+	//os.Stdin.WriteString("coffee")
+
+	log.Infof("Executing function at 0x%x", *(*uintptr)(Pointer(&f)))
 	f()
 
 	return nil

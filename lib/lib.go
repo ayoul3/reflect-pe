@@ -123,7 +123,6 @@ func Execute() (err error) {
 	UpdateSectionProtections(Wapi, Final)
 	log.Infof("Updated memory protections")
 
-	log.Infof("Jumping to entry point %x", Final.GetEntryPoint())
 	err = StartThread(Wapi, Final)
 	if err != nil {
 		log.Fatalf("Error creating thread %s", err)
