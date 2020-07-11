@@ -2,6 +2,7 @@ package lib
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -16,6 +17,29 @@ var (
 	Final  *Bin
 	Wapi   *Win
 )
+
+type ArgInjector func(addr uintptr, api WinAPI, bin BinAPI) error
+
+var ArgInjectors = map[string]ArgInjector{
+	"__p___argv": func(addr uintptr, api WinAPI, bin BinAPI) error {
+		return InjectArgv(addr, api, bin)
+	},
+	"__p___argc": func(addr uintptr, api WinAPI, bin BinAPI) error {
+		return InjectArgc(addr, api, bin)
+	},
+	"GetCommandLineA": func(addr uintptr, api WinAPI, bin BinAPI) error {
+		return InjectCommandLineA(addr, api, bin)
+	},
+	"GetCommandLineW": func(addr uintptr, api WinAPI, bin BinAPI) error {
+		return InjectCommandLineW(addr, api, bin)
+	},
+	"__wgetmainargs": func(addr uintptr, api WinAPI, bin BinAPI) error {
+		return InjectCmdLn(addr, api, bin)
+	},
+	"__getmainargs": func(addr uintptr, api WinAPI, bin BinAPI) error {
+		return InjectCmdLn(addr, api, bin)
+	},
+}
 
 func NewWinAPI() *Win {
 	return &Win{}
@@ -113,17 +137,38 @@ func FixOffsets() (err error) {
 	return nil
 }
 
-func Execute() (err error) {
+func PrepareArguments(args string) (err error) {
+	if len(args) < 1 {
+		return nil
+	}
+	Final.Argv = strings.Split(args, " ")
+	Final.Argc = len(Final.Argv)
+
+	log.Infof("Injecting arguments")
+	for _, function := range Final.GetFunctions() {
+		if injectorFunc, ok := ArgInjectors[function.Name]; ok {
+			fmt.Printf("Calling args injector for: %s\n", function.Name)
+			injectorFunc(function.Address, Wapi, Final)
+		}
+	}
+
+	return err
+}
+
+func Execute(method string) (err error) {
 
 	//*(*uint32)(Final.GetEntryPoint()) = 0x90CCFF48
-	//*(*uint32)(ptrOffset(Final.GetEntryPoint(), 4)) = 0x90909090
-	//*(*uint32)(ptrOffset(Final.GetEntryPoint(), 9)) = 0x88C48348
-	//*(*uint32)(ptrOffset(Final.GetEntryPoint(), 20)) = 0x88C48348
 
 	UpdateSectionProtections(Wapi, Final)
 	log.Infof("Updated memory protections")
 
-	err = StartThread(Wapi, Final)
+	switch method {
+	case "function":
+		err = StartThread(Wapi, Final)
+	default:
+		err = StartThreadWait(Wapi, Final)
+	}
+
 	if err != nil {
 		log.Fatalf("Error creating thread %s", err)
 	}

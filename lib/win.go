@@ -6,7 +6,7 @@ import (
 )
 
 type WinAPI interface {
-	Memcopy(start, end, size uintptr)
+	Memcopy(src, dst, size uintptr)
 	VirtualAlloc(size uint) (Pointer, error)
 	CstrVal(ptr Pointer) (out []byte)
 	LoadLibrary(ptrName string) (Pointer, error)
@@ -21,6 +21,7 @@ type WinAPI interface {
 	VirtualProtect(ptr uintptr, size uintptr, exec, write bool) error
 	ResumeThread(addr uintptr) error
 	ReadBytes(ptr Pointer, size uint) (out []byte)
+	UpdateExecMemory(funcAddr uintptr, sc []byte) (err error)
 }
 
 type Win struct {
@@ -137,6 +138,21 @@ func (w *Win) WaitForSingleObject(handle uintptr) error {
 	if err != syscall.Errno(0) {
 		return err
 	}
+	return nil
+}
+
+func (w *Win) UpdateExecMemory(funcAddr uintptr, sc []byte) (err error) {
+
+	if err = w.VirtualProtect(funcAddr, uintptr(len(sc)), false, true); err != nil {
+		return err
+	}
+
+	w.Memcopy(uintptr(Pointer(&sc[0])), funcAddr, uintptr(len(sc)))
+
+	if err = w.VirtualProtect(funcAddr, uintptr(len(sc)), true, false); err != nil {
+		return err
+	}
+
 	return nil
 }
 func (w *Win) VirtualProtect(ptr uintptr, size uintptr, exec, write bool) error {

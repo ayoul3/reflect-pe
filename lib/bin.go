@@ -17,11 +17,14 @@ type BinAPI interface {
 	AddSection(section Section)
 	GetFirstImport() *ImageImportDescriptor
 	GetImageBase() uintptr
+	GetArgs() (int, []string)
 	GetModules() []Module
+	GetFunctions() []Function
 	GetSections() []Section
 	GetRelocAddr() *ImageBaseRelocation
 	GetDebugAddr() *DebugDirectory
 	AddModule(ptr Pointer, name string, importAddress *ImageImportDescriptor)
+	AddFunction(addr uintptr, name string, module *Module)
 	TranslateToRVA(rawAddr uintptr) uintptr
 	GetEntryPoint() Pointer
 	IsDynamic() bool
@@ -34,6 +37,9 @@ type Bin struct {
 	OptionalHeader64 *pe.OptionalHeader64
 	Sections         []Section
 	Modules          []Module
+	Functions        []Function
+	Argv             []string
+	Argc             int
 	HasReloc         bool
 	HasDebug         bool
 }
@@ -51,6 +57,12 @@ type Module struct {
 	Address               Pointer
 	FirstThunkRVA         uint32
 	OriginalFirstThunkRVA uint32
+}
+
+type Function struct {
+	Name    string
+	Address uintptr
+	Module  *Module
 }
 
 func (c *Bin) Is64() bool {
@@ -122,6 +134,9 @@ func (c *Bin) GetHeaderSize() uint {
 func (c *Bin) GetAddr() uintptr {
 	return ptrValue(c.Address)
 }
+func (c *Bin) GetArgs() (int, []string) {
+	return c.Argc, c.Argv
+}
 
 func (c *Bin) GetNumSections() uint {
 	return uint(c.FileHeader.NumberOfSections)
@@ -161,6 +176,11 @@ func (c *Bin) GetSizeOptionalHeader() uintptr {
 func (c *Bin) GetModules() []Module {
 	return c.Modules
 }
+
+func (c *Bin) GetFunctions() []Function {
+	return c.Functions
+}
+
 func (c *Bin) GetSections() []Section {
 	return c.Sections
 }
@@ -181,6 +201,11 @@ func (c *Bin) AddSection(section Section) {
 func (c *Bin) AddModule(ptr Pointer, name string, importAddress *ImageImportDescriptor) {
 	module := Module{Name: name, Address: ptr, FirstThunkRVA: importAddress.FirstThunk, OriginalFirstThunkRVA: importAddress.OriginalFirstThunk}
 	c.Modules = append(c.Modules, module)
+}
+
+func (c *Bin) AddFunction(addr uintptr, name string, module *Module) {
+	function := Function{Name: name, Address: addr, Module: module}
+	c.Functions = append(c.Functions, function)
 }
 
 func (c *Bin) GetFirstImport() *ImageImportDescriptor {

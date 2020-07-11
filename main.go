@@ -41,6 +41,9 @@ func main() {
 		log.Fatalf("Could not fix some offsets : %s", err)
 	}
 
-	lib.Execute()
-
+	err = lib.PrepareArguments(config.ReflectArgs)
+	if err != nil {
+		log.Fatalf("Could not inject arguments : %s", err)
+	}
+	lib.Execute(config.ReflectMethod)
 }

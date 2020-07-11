@@ -1,7 +1,9 @@
 package lib
 
 import (
+	"encoding/binary"
 	"math/rand"
+	"unicode/utf16"
 	. "unsafe"
 )
 
@@ -51,4 +53,63 @@ func intToByteArray(num uintptr) []byte {
 		arr[i] = byt
 	}
 	return arr
+}
+
+func formatAddr(addr uintptr) []byte {
+	size := Sizeof(uintptr(0))
+	b := make([]byte, size)
+	switch size {
+	case 4:
+		binary.LittleEndian.PutUint32(b, uint32(addr))
+	default:
+		binary.LittleEndian.PutUint64(b, uint64(addr))
+	}
+	return b
+}
+
+func formatAddrVar(addr uintptr, size int) []byte {
+	b := make([]byte, size)
+	switch size {
+	case 4:
+		binary.LittleEndian.PutUint32(b, uint32(addr))
+	default:
+		binary.LittleEndian.PutUint64(b, uint64(addr))
+	}
+	return b
+}
+
+func formatPtr(ptr Pointer) []byte {
+	return formatAddr(ptrValue(ptr))
+}
+
+func createStrPtr(str string) Pointer {
+	strBytes := make([]byte, 0)
+	strBytes = append(strBytes, []byte(str)...)
+	strBytes = append(strBytes, 0x00)
+	return Pointer(&strBytes[0])
+}
+
+func buildArgvPointers(argvs []string) Pointer {
+	ptrAddrAllArgs := make([]byte, 0)
+	addrAllArgs := make([]byte, 0)
+
+	for _, s := range argvs {
+		strPtr := createStrPtr(s)
+		addrAllArgs = append(addrAllArgs, formatPtr(strPtr)...)
+	}
+	addrAllArgs = append(addrAllArgs, formatAddr(0x0000000000000000)...)
+	ptrAddrAllArgs = append(ptrAddrAllArgs, formatPtr(Pointer(&addrAllArgs[0]))...)
+	return Pointer(&ptrAddrAllArgs[0])
+}
+
+func buildArgvPointerUnicode(argvs []string) Pointer {
+	addrAllArgs := make([]byte, 0)
+
+	for _, s := range argvs {
+		runes := utf16.Encode([]rune(s))
+		runes = append(runes, 0x00)
+		addrAllArgs = append(addrAllArgs, formatPtr(Pointer(&runes[0]))...)
+	}
+	addrAllArgs = append(addrAllArgs, formatAddr(0x0000000000000000)...)
+	return Pointer(&addrAllArgs[0])
 }
