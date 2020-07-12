@@ -2,7 +2,6 @@ package lib
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -147,7 +146,7 @@ func PrepareArguments(args string) (err error) {
 	log.Infof("Injecting arguments")
 	for _, function := range Final.GetFunctions() {
 		if injectorFunc, ok := ArgInjectors[function.Name]; ok {
-			fmt.Printf("Calling args injector for: %s\n", function.Name)
+			log.Infof("Calling args injector for: %s\n", function.Name)
 			injectorFunc(function.Address, Wapi, Final)
 		}
 	}
@@ -164,9 +163,11 @@ func Execute(method string) (err error) {
 
 	switch method {
 	case "function":
-		err = StartThread(Wapi, Final)
+		err = ExecuteInFunction(Wapi, Final)
+	case "wait":
+		err = StartThreadWait(Wapi, Final, true)
 	default:
-		err = StartThreadWait(Wapi, Final)
+		err = StartThreadWait(Wapi, Final, false)
 	}
 
 	if err != nil {
