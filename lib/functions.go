@@ -277,7 +277,7 @@ func StartThreadWait(api WinAPI, bin BinAPI, sleep bool) (err error) {
 func PrepareJumper(api WinAPI, entryPoint Pointer) (Pointer, error) {
 	// movabs r13, entrypoint
 	// jmp r13
-	opcode := fmt.Sprintf("49Bd%x41ffe5", formatPtr(ptrOffset(entryPoint, 0)))
+	opcode := fmt.Sprintf("49Bd%x41ffe5", formatPtr(entryPoint))
 
 	sc, err := hex.DecodeString(opcode)
 	if err != nil {
@@ -307,8 +307,8 @@ func ExecuteInFunction(api WinAPI, bin BinAPI) (err error) {
 
 	**(**uintptr)(Pointer(&f)) = (uintptr)(addr)
 	log.Debugf("Overwrote function address at 0x%x with stub address 0x%x", *(*uintptr)(Pointer(&f)), addr)
-
 	log.Infof("Executing function at 0x%x", *(*uintptr)(Pointer(&f)))
+
 	f()
 
 	return nil

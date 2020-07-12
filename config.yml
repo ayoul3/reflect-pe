@@ -1,7 +1,7 @@
-BinaryPath: 'C:\dont_scan\mylove.exe'
-#BinaryPath: 'C:\Users\ayoul3\Documents\go\test\test.exe'
+#BinaryPath: 'C:\dont_scan\mylove.exe'
+BinaryPath: 'C:\Users\ayoul3\Documents\go\test\test.exe'
 #BinaryPath: 'res\cmdLineW.exe'
 #BinaryPath: 'res\sock_static_file.exe'
-ReflectArgs: 'mimi coffee exit' # arg[0] is the program's name
-ReflectMethod: function  # wait, function or empty
+ReflectArgs: 'heyho standard::cls' # arg[0] is the program's name
+ReflectMethod:   # wait, function or empty
 LogLevel: 2
