@@ -1,7 +1,9 @@
-#BinaryPath: 'C:\dont_scan\mylove.exe'
-BinaryPath: 'C:\Users\ayoul3\Documents\go\test\test.exe'
+#BinaryPath: 'res\stripped_go.exe'
+#BinaryPath: 'C:\Users\ayoul3\Documents\go\test\main.exe'
 #BinaryPath: 'res\cmdLineW.exe'
-#BinaryPath: 'res\sock_static_file.exe'
+#BinaryPath: 'res\sock_file.exe'
+BinaryPath: 'res\sock_static_file.exe'
+#BinaryPath: 'c:\dont_scan\mylove.exe'
 ReflectArgs: 'heyho standard::cls' # arg[0] is the program's name
 ReflectMethod:   # wait, function or empty
 LogLevel: 2

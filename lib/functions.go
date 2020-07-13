@@ -44,7 +44,7 @@ func CopySections(api WinAPI, src, dst BinAPI) {
 		finalVA := dst.GetAddr() + uintptr(section.VirtualAddress)
 		baseRaw := src.GetAddr() + uintptr(section.PointerToRawData)
 
-		log.Debugf("Copying section %s to 0x%x", string(section.Name[:]), finalVA)
+		log.Debugf("Copying section %s (%d) to 0x%x", string(section.Name[:]), section.SizeOfRawData, finalVA)
 
 		api.Memcopy(baseRaw, finalVA, uintptr(section.SizeOfRawData))
 
@@ -150,6 +150,8 @@ func FixImageRelocations(api WinAPI, bin BinAPI, ptrRelocations *ImageBaseReloca
 
 func FixRelocations(api WinAPI, bin BinAPI) {
 	diffOffset := bin.GetAddr() - bin.GetImageBase()
+	//diffOffset := bin.GetImageBase() - bin.GetAddr()
+	//diffOffset := uintptr(0)
 	ptrRelocations := bin.GetRelocAddr()
 
 	for {
@@ -164,54 +166,6 @@ func FixRelocations(api WinAPI, bin BinAPI) {
 		ptrRelocations = (*ImageBaseRelocation)(ptrOffset(Pointer(ptrRelocations), uintptr(ptrRelocations.SizeOfBlock)))
 	}
 
-}
-
-func FixPogoEntry(api WinAPI, bin BinAPI, name string, pogoEntry *PogoEntry) {
-	offset := uintptr(pogoEntry.Start_rva)
-	firstPogoAddress := ptrOffset(Pointer(bin.GetAddr()), offset)
-	for i := uintptr(0); i < uintptr(pogoEntry.Size); i += Sizeof(uintptr(0)) {
-		pogoAddress := ptrOffset(firstPogoAddress, i)
-		val := *(*uintptr)(pogoAddress)
-
-		if val&bin.GetImageBase() == bin.GetImageBase() && val-bin.GetImageBase() < 0xFFFF {
-			*(*uintptr)(pogoAddress) = val - bin.GetImageBase() + bin.GetAddr()
-			log.Debugf("Updated pogo %s from %x to %x at %x\n", name, val, *(*uintptr)(pogoAddress), pogoAddress)
-		}
-	}
-}
-func FixPogo(api WinAPI, bin BinAPI, offset uintptr, size uint32) {
-	pogoPtr := (*Pogo)(Pointer(bin.GetAddr() + offset))
-	pogoEntry := (*PogoEntry)(ptrOffset(Pointer(pogoPtr), 4))
-	for i := 0; ; i++ {
-		if pogoEntry.Size == 0 {
-			break
-		}
-		pogoName := api.CstrVal(Pointer(&pogoEntry.Name))
-
-		FixPogoEntry(api, bin, string(pogoName), pogoEntry)
-		offset = uintptr(len(pogoName)) + Sizeof(*pogoEntry) - 3 // compensate for Go struct alignment
-		if offset%4 != 0 {
-			offset += (4 - offset%4)
-		}
-
-		pogoEntry = (*PogoEntry)(ptrOffset(Pointer(pogoEntry), offset))
-	}
-
-}
-
-func FixDebugSymbols(api WinAPI, bin BinAPI) {
-	debugAddress := bin.GetDebugAddr()
-	for i := 0; ; i++ {
-		if debugAddress.SizeOfData == 0 {
-			break
-		}
-		if debugAddress.Type == POGO_TYPE {
-			debugRVA := bin.TranslateToRVA(uintptr(debugAddress.PointerToRawData))
-			log.Infof("Will fix POGO debug at virtual offset: %x, size: %x\n", debugRVA, debugAddress.SizeOfData)
-			FixPogo(api, bin, debugRVA, debugAddress.SizeOfData)
-		}
-		debugAddress = (*DebugDirectory)(ptrOffset(Pointer(debugAddress), Sizeof(*debugAddress)))
-	}
 }
 
 func UpdateSectionProtections(api WinAPI, bin BinAPI) (err error) {
@@ -240,7 +194,7 @@ func FixOffsetsInSection(api WinAPI, bin BinAPI, section Section) {
 
 		if val&oldBaseAddress == oldBaseAddress && val-oldBaseAddress < 0xFFFF {
 			*(*uintptr)(rDataptr) = val - oldBaseAddress + bin.GetAddr()
-			log.Debugf("%s: Updated from %x to %x at %x\n", section.Name, val, *(*uintptr)(rDataptr), rDataptr)
+			log.Debugf("%s: Updated from %x to %x at %x", section.Name, val, *(*uintptr)(rDataptr), rDataptr)
 		}
 	}
 	//os.Exit(0)

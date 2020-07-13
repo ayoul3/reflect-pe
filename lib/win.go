@@ -198,16 +198,6 @@ type DebugDirectory struct {
 	PointerToRawData uint32
 }
 
-type Pogo struct {
-	Signature uint32
-	Entries   uint32
-}
-
-type PogoEntry struct {
-	Start_rva uint32
-	Size      uint32
-	Name      uint8
-}
 type ImageExportDescriptor struct {
 	Characteristics       uint32
 	TimeDateStamp         uint32
@@ -226,7 +216,6 @@ const IMAGE_REL_BASED_HIGH = 0x1
 const IMAGE_REL_BASED_LOW = 0x2
 const IMAGE_REL_BASED_HIGHLOW = 0x3
 const IMAGE_REL_BASED_DIR64 = 0xa
-const POGO_TYPE = 0xd
 
 type ImageBaseRelocation struct {
 	VirtualAddress uint32

@@ -124,12 +124,11 @@ func CopyData() (err error) {
 }
 
 func FixOffsets() (err error) {
-	FixDebugSymbols(Wapi, Final)
 
 	if Final.IsDynamic() {
 		FixRelocations(Wapi, Final)
 	} else {
-		log.Infof("Static pe file - Manually fixing offsets")
+		log.Warn("Static pe file - Trying to manually fixing offsets - May break!")
 		FixingHardcodedOffsets(Wapi, Final)
 	}
 
@@ -156,7 +155,7 @@ func PrepareArguments(args string) (err error) {
 
 func Execute(method string) (err error) {
 
-	//*(*uint32)(Final.GetEntryPoint()) = 0x90CCFF48
+	//*(*uint32)(Final.GetEntryPoint()) = 0xCCCCCCCC
 
 	UpdateSectionProtections(Wapi, Final)
 	log.Infof("Updated memory protections")
