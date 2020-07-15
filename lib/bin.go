@@ -23,6 +23,7 @@ type BinAPI interface {
 	GetSections() []Section
 	GetRelocAddr() *ImageBaseRelocation
 	GetDebugAddr() *DebugDirectory
+	GetImageSize() uint
 	AddModule(ptr Pointer, name string, importAddress *ImageImportDescriptor)
 	AddFunction(addr uintptr, name string, module *Module)
 	TranslateToRVA(rawAddr uintptr) uintptr

@@ -2,6 +2,7 @@ package lib
 
 import (
 	"syscall"
+	"unicode/utf16"
 	. "unsafe"
 )
 
@@ -9,6 +10,7 @@ type WinAPI interface {
 	Memcopy(src, dst, size uintptr)
 	VirtualAlloc(size uint) (Pointer, error)
 	CstrVal(ptr Pointer) (out []byte)
+	UstrVal(ptr Pointer) []rune
 	LoadLibrary(ptrName string) (Pointer, error)
 	GetProcAddress(libraryAddress, ptrName Pointer) (uintptr, error)
 	Incr64(src Pointer, val uint64)
@@ -68,6 +70,19 @@ func (w *Win) CstrVal(ptr Pointer) (out []byte) {
 		ptr = ptrOffset(ptr, 1)
 	}
 	return out
+}
+func (w *Win) UstrVal(ptr Pointer) []rune {
+	var byteVal uint16
+	out := make([]uint16, 0)
+	for i := 0; ; i++ {
+		byteVal = *(*uint16)(Pointer(ptr))
+		if byteVal == 0x0000 {
+			break
+		}
+		out = append(out, byteVal)
+		ptr = ptrOffset(ptr, 2)
+	}
+	return utf16.Decode(out)
 }
 
 func (w *Win) ReadBytes(ptr Pointer, size uint) (out []byte) {

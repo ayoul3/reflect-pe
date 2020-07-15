@@ -87,7 +87,7 @@ func NewBinary(api *Win, size uint) (*Bin, error) {
 func AllocateMemory() (err error) {
 	log.Infof("Loaded initial binary at address 0x%x", Binary.Address)
 
-	PreparePEHeaders(Binary)
+	ParsePEHeaders(Binary)
 
 	Final, err = NewBinary(Wapi, Binary.GetImageSize())
 	if err != nil {
@@ -103,7 +103,7 @@ func CopyData() (err error) {
 	CopyHeaders(Wapi, Binary, Final)
 	log.Infof("Copied %d bytes of headers to new location", Binary.GetHeaderSize())
 
-	PreparePEHeaders(Final)
+	ParsePEHeaders(Final)
 
 	CopySections(Wapi, Binary, Final)
 	log.Infof("Copied %d sections to new location", len(Final.Sections))
@@ -131,7 +131,6 @@ func FixOffsets() (err error) {
 		log.Warn("Static pe file - Trying to manually fixing offsets - May break!")
 		FixingHardcodedOffsets(Wapi, Final)
 	}
-
 	return nil
 }
 

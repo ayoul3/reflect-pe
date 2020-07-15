@@ -4,13 +4,14 @@ import (
 	"debug/pe"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"time"
 	. "unsafe"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func PreparePEHeaders(bin BinAPI) {
+func ParsePEHeaders(bin BinAPI) {
 	bin.FillFileHeader()
 	bin.FillOptionalHeader()
 }
@@ -199,6 +200,27 @@ func FixOffsetsInSection(api WinAPI, bin BinAPI, section Section) {
 	}
 	//os.Exit(0)
 }
+
+func PatchBytes(api WinAPI, bin BinAPI, section Section) {
+	var rDataptr Pointer
+	offset := section.RVA
+
+	for i := uintptr(0); i < uintptr(section.Size); i += Sizeof(uint(0)) {
+		rDataptr = ptrOffset(Pointer(bin.GetAddr()), offset+i)
+		//fmt.Printf("%s - %x: %x\n", section.Name, rDataptr, *(*uintptr)(rDataptr))
+		//val := *(*uintptr)(rDataptr)
+
+		strVal := string(api.UstrVal(rDataptr))
+
+		if strVal == "mimikatz" {
+			fmt.Println("found bad string: %s ", api.UstrVal(rDataptr))
+			//*(*uintptr)(rDataptr) = val - oldBaseAddress + bin.GetAddr()
+			//log.Debugf("%s: Updated from %x to %x at %x", section.Name, val, *(*uintptr)(rDataptr), rDataptr)
+		}
+	}
+	os.Exit(0)
+}
+
 func FixingHardcodedOffsets(api WinAPI, bin BinAPI) {
 	for _, section := range bin.GetSections() {
 		FixOffsetsInSection(api, bin, section)
@@ -264,6 +286,7 @@ func ExecuteInFunction(api WinAPI, bin BinAPI) (err error) {
 	log.Infof("Executing function at 0x%x", *(*uintptr)(Pointer(&f)))
 
 	f()
+	//time.Sleep(5 * time.Second)
 
 	return nil
 }
