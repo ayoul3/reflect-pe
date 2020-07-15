@@ -33,6 +33,7 @@ type BinAPI interface {
 
 type Bin struct {
 	Address          Pointer
+	Data             []byte
 	FileHeader       *pe.FileHeader
 	OptionalHeader32 *pe.OptionalHeader32
 	OptionalHeader64 *pe.OptionalHeader64

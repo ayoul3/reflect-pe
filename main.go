@@ -26,6 +26,8 @@ func main() {
 		log.Fatalf("Could not load binary from %s: %s", config.BinaryPath, err)
 	}
 
+	lib.Obfuscate()
+
 	err = lib.AllocateMemory()
 	if err != nil {
 		log.Fatalf("Could not allocate new memory for binary : %s", err)

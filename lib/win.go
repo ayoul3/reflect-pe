@@ -71,6 +71,7 @@ func (w *Win) CstrVal(ptr Pointer) (out []byte) {
 	}
 	return out
 }
+
 func (w *Win) UstrVal(ptr Pointer) []rune {
 	var byteVal uint16
 	out := make([]uint16, 0)

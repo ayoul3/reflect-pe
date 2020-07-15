@@ -5,5 +5,5 @@
 #BinaryPath: 'res\sock_static_file.exe'
 BinaryPath: 'c:\dont_scan\mylove.exe'
 ReflectArgs: 'heyho coffee' # arg[0] is the program's name
-ReflectMethod: function  # wait, function or empty
+ReflectMethod:  # wait, function or empty
 LogLevel: 2

