@@ -4,7 +4,6 @@ import (
 	"debug/pe"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"regexp"
 	"time"
 	. "unsafe"
@@ -163,8 +162,6 @@ func FixImageRelocations(api WinAPI, bin BinAPI, ptrRelocations *ImageBaseReloca
 
 func FixRelocations(api WinAPI, bin BinAPI) {
 	diffOffset := bin.GetAddr() - bin.GetImageBase()
-	//diffOffset := bin.GetImageBase() - bin.GetAddr()
-	//diffOffset := uintptr(0)
 	ptrRelocations := bin.GetRelocAddr()
 
 	for {
@@ -202,7 +199,6 @@ func FixOffsetsInSection(api WinAPI, bin BinAPI, section Section) {
 
 	for i := uintptr(0); i < uintptr(section.Size); i += Sizeof(uint(0)) {
 		rDataptr = ptrOffset(Pointer(bin.GetAddr()), offset+i)
-		//fmt.Printf("%s - %x: %x\n", section.Name, rDataptr, *(*uintptr)(rDataptr))
 		val := *(*uintptr)(rDataptr)
 
 		if val&oldBaseAddress == oldBaseAddress && val-oldBaseAddress < 0xFFFF {
@@ -210,27 +206,6 @@ func FixOffsetsInSection(api WinAPI, bin BinAPI, section Section) {
 			log.Debugf("%s: Updated from %x to %x at %x", section.Name, val, *(*uintptr)(rDataptr), rDataptr)
 		}
 	}
-	//os.Exit(0)
-}
-
-func PatchBytes(api WinAPI, bin BinAPI, section Section) {
-	var rDataptr Pointer
-	offset := section.RVA
-
-	for i := uintptr(0); i < uintptr(section.Size); i += Sizeof(uint(0)) {
-		rDataptr = ptrOffset(Pointer(bin.GetAddr()), offset+i)
-		//fmt.Printf("%s - %x: %x\n", section.Name, rDataptr, *(*uintptr)(rDataptr))
-		//val := *(*uintptr)(rDataptr)
-
-		strVal := string(api.UstrVal(rDataptr))
-
-		if strVal == "mimikatz" {
-			fmt.Println("found bad string: %s ", api.UstrVal(rDataptr))
-			//*(*uintptr)(rDataptr) = val - oldBaseAddress + bin.GetAddr()
-			//log.Debugf("%s: Updated from %x to %x at %x", section.Name, val, *(*uintptr)(rDataptr), rDataptr)
-		}
-	}
-	os.Exit(0)
 }
 
 func FixingHardcodedOffsets(api WinAPI, bin BinAPI) {
@@ -298,7 +273,6 @@ func ExecuteInFunction(api WinAPI, bin BinAPI) (err error) {
 	log.Infof("Executing function at 0x%x", *(*uintptr)(Pointer(&f)))
 
 	f()
-	//time.Sleep(5 * time.Second)
 
 	return nil
 }
