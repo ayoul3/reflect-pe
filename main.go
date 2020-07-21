@@ -26,7 +26,9 @@ func main() {
 		log.Fatalf("Could not load binary from %s: %s", config.BinaryPath, err)
 	}
 
-	lib.Obfuscate()
+	if len(config.Keywords) > 0 {
+		lib.ObfuscateStrings(config.Keywords)
+	}
 
 	err = lib.AllocateMemory()
 	if err != nil {

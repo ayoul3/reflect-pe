@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 	. "unsafe"
 
@@ -30,6 +31,17 @@ func RegisterNewSection(binary BinAPI, originalSection *pe.SectionHeader32) {
 		MemFlag: uint8(originalSection.Characteristics >> 24),
 	}
 	binary.AddSection(section)
+}
+
+func ReplaceWord(bin BinAPI, word string) {
+	newWord := shuffle(word)
+	re := regexp.MustCompile("(?i)" + utf16LeStr(word))
+	bin.UpdateData(re.ReplaceAll(Binary.Data, utf16Le(newWord)))
+
+	re2 := regexp.MustCompile("(?i)" + word)
+	bin.UpdateData(re2.ReplaceAll(Binary.Data, []byte(newWord)))
+
+	log.Debugf("Replacing %s with %s", word, newWord)
 }
 
 func CopySections(api WinAPI, src, dst BinAPI) {

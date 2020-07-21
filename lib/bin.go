@@ -29,6 +29,7 @@ type BinAPI interface {
 	TranslateToRVA(rawAddr uintptr) uintptr
 	GetEntryPoint() Pointer
 	IsDynamic() bool
+	UpdateData(data []byte)
 }
 
 type Bin struct {
@@ -100,6 +101,11 @@ func (c *Bin) FillOptionalHeader() {
 func (c *Bin) FillImports() {
 	fileHeaderOffset := uint16Val(c.Address, 0x3C)
 	c.FileHeader = (*pe.FileHeader)(ptrOffset(c.Address, uintptr(fileHeaderOffset+4)))
+}
+
+func (c *Bin) UpdateData(data []byte) {
+	c.Data = data
+	c.Address = Pointer(&data[0])
 }
 
 func (c *Bin) GetOptionalHeader() Pointer {

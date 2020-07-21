@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 	"strings"
 
 	. "unsafe"
@@ -85,19 +84,12 @@ func NewBinary(api *Win, size uint) (*Bin, error) {
 	return &Bin{Address: Pointer(addr)}, nil
 }
 
-func Obfuscate() {
-	re := regexp.MustCompile("\x00\x6d\x00\x69\x00\x6d\x00\x69\x00\x6b\x00\x61\x00\x74\x00\x7A")
-	//dat = re.ReplaceAll(dat, []byte("\x00\x61\x00\x61\x00\x61\x00\x61"))
-	Binary.Data = re.ReplaceAll(Binary.Data, []byte("\x00\x61\x00\x61\x00\x61\x00\x61\x00\x61\x00\x61\x00\x61\x00\x61"))
-	Binary.Address = Pointer(&Binary.Data[0])
+func ObfuscateStrings(blacklist []string) {
+	log.Infof("Replapcing %d keywords", len(blacklist))
 
-	re2 := regexp.MustCompile(`mimikatz`)
-	Binary.Data = re2.ReplaceAll(Binary.Data, []byte("yoyoyoyo"))
-	Binary.Address = Pointer(&Binary.Data[0])
-	//ptrMimiUnicode := Binary.GetAddr() + 0xD7748
-	//fmt.Printf("unicode: %s\n", string(Wapi.UstrVal(Pointer(ptrMimiUnicode))))
-	//os.Exit(0)
-
+	for _, word := range blacklist {
+		ReplaceWord(Binary, word)
+	}
 }
 
 func AllocateMemory() (err error) {

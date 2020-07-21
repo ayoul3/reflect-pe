@@ -1,10 +1,15 @@
 package lib
 
 import (
+	"bytes"
 	"encoding/binary"
 	"math/rand"
+	"time"
 	"unicode/utf16"
 	. "unsafe"
+
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 )
 
 // safely duplicate a pointer before converting it to uintptr to keep GC from cleaning it
@@ -112,4 +117,25 @@ func buildArgvPointerUnicode(argvs []string) Pointer {
 	}
 	addrAllArgs = append(addrAllArgs, formatAddr(0x0000000000000000)...)
 	return Pointer(&addrAllArgs[0])
+}
+
+func utf16Le(s string) []byte {
+	enc := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewEncoder()
+	var buf bytes.Buffer
+	t := transform.NewWriter(&buf, enc)
+	t.Write([]byte(s))
+	return buf.Bytes()
+}
+
+func utf16LeStr(s string) string {
+	return string(utf16Le(s))
+}
+
+func shuffle(in string) string {
+	rand.Seed(time.Now().Unix())
+	inRune := []rune(in)
+	rand.Shuffle(len(inRune), func(i, j int) {
+		inRune[i], inRune[j] = inRune[j], inRune[i]
+	})
+	return string(inRune)
 }
