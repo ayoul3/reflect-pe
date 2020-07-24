@@ -1,3 +1,3 @@
 # Reflect-pe
 
-Reflectively load Portable Executable file for in-memory execution
+Reflectively load and execute an x64 Portable Executable in-memory
