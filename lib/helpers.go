@@ -3,6 +3,7 @@ package lib
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"math/rand"
 	"time"
 	"unicode/utf16"
@@ -138,4 +139,18 @@ func shuffle(in string) string {
 		inRune[i], inRune[j] = inRune[j], inRune[i]
 	})
 	return string(inRune)
+}
+
+func parseOrdinal(ordinal uint) (Pointer, string) {
+	funcOrdinal := uint16(ordinal)
+	ptrName := Pointer(uintptr(funcOrdinal))
+	funcName := fmt.Sprintf("#%d", funcOrdinal)
+	return ptrName, funcName
+}
+
+func parseFuncAddress(api WinAPI, base, offset uintptr) (Pointer, string) {
+	pImageImportByName := (*ImageImportByName)(Pointer(base + offset))
+	ptrName := Pointer(&pImageImportByName.Name)
+	funcName := string(api.CstrVal(ptrName))
+	return ptrName, funcName
 }

@@ -35,24 +35,22 @@ func RegisterNewSection(binary BinAPI, originalSection *pe.SectionHeader32) {
 func ReplaceWord(bin BinAPI, word string) {
 	newWord := shuffle(word)
 	re := regexp.MustCompile("(?i)" + utf16LeStr(word))
-	bin.UpdateData(re.ReplaceAll(Binary.Data, utf16Le(newWord)))
+	bin.UpdateData(re.ReplaceAll(bin.GetData(), utf16Le(newWord)))
 
 	re2 := regexp.MustCompile("(?i)" + word)
-	bin.UpdateData(re2.ReplaceAll(Binary.Data, []byte(newWord)))
+	bin.UpdateData(re2.ReplaceAll(bin.GetData(), []byte(newWord)))
 
 	log.Debugf("Replacing %s with %s", word, newWord)
 }
 
 func CopySections(api WinAPI, src, dst BinAPI) {
-	numSections := Binary.GetNumSections()
+	numSections := src.GetNumSections()
 	nextSection := uint(0)
+
 	for i := uint(0); i < numSections; i++ {
 		offsetSection := src.GetSizeOptionalHeader() + uintptr(nextSection)
-
 		section := (*pe.SectionHeader32)(ptrOffset(src.GetOptionalHeader(), offsetSection))
-
 		RegisterNewSection(dst, section)
-
 		finalVA := dst.GetAddr() + uintptr(section.VirtualAddress)
 		baseRaw := src.GetAddr() + uintptr(section.PointerToRawData)
 
@@ -65,7 +63,6 @@ func CopySections(api WinAPI, src, dst BinAPI) {
 }
 
 func LoadLibraries(api WinAPI, bin BinAPI) (err error) {
-
 	importAddress := bin.GetFirstImport()
 	for i := 0; ; i++ {
 		if importAddress.Name == 0 {
@@ -77,7 +74,6 @@ func LoadLibraries(api WinAPI, bin BinAPI) (err error) {
 		if err != nil {
 			return fmt.Errorf("Could not load %s - %s", string(libraryName[:]), err)
 		}
-
 		log.Debugf("Loaded library %s at 0x%x", string(libraryName[:]), ptrLibrary)
 		bin.AddModule(ptrLibrary, string(libraryName[:]), importAddress)
 		importAddress = (*ImageImportDescriptor)(ptrOffset(Pointer(importAddress), Sizeof(*importAddress)))
@@ -85,18 +81,6 @@ func LoadLibraries(api WinAPI, bin BinAPI) (err error) {
 	return nil
 }
 
-func parseOrdinal(ordinal uint) (Pointer, string) {
-	funcOrdinal := uint16(ordinal)
-	ptrName := Pointer(uintptr(funcOrdinal))
-	funcName := fmt.Sprintf("#%d", funcOrdinal)
-	return ptrName, funcName
-}
-func parseFuncAddress(api WinAPI, base, offset uintptr) (Pointer, string) {
-	pImageImportByName := (*ImageImportByName)(Pointer(base + offset))
-	ptrName := Pointer(&pImageImportByName.Name)
-	funcName := string(api.CstrVal(ptrName))
-	return ptrName, funcName
-}
 func LoadFunction(api WinAPI, bin BinAPI, module Module) (err error) {
 	var ptrName Pointer
 	var funcName string
@@ -114,7 +98,10 @@ func LoadFunction(api WinAPI, bin BinAPI, module Module) (err error) {
 		} else {
 			ptrName, funcName = parseFuncAddress(api, bin.GetAddr(), firstThunk.AddressOfData)
 		}
-		funcAddr, _ := api.GetProcAddress(module.Address, ptrName)
+		funcAddr, err := api.GetProcAddress(module.Address, ptrName)
+		if err != nil {
+			return err
+		}
 		log.Debugf("Imported function %s at 0x%x (%s)", funcName, funcAddr, module.Name)
 		firstThunk.AddressOfData = funcAddr
 

@@ -4,7 +4,7 @@
 #BinaryPath: 'res\sock_file.exe'
 #BinaryPath: 'res\sock_static_file.exe'
 BinaryPath: 'c:\dont_scan\mylove.exe'
-ReflectArgs: 'heyho coffee' # arg[0] is the program's name
+ReflectArgs: 'heyho' # arg[0] is the program's name
 ReflectMethod:  # wait, function or empty
 LogLevel: 2
 Keywords:
@@ -38,3 +38,8 @@ Keywords:
   - dcsync
   - netsync
   - lsadump
+  - minesweeper
+  - busylight
+  - sysenv
+  - kerberos
+  - vault

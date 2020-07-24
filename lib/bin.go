@@ -20,6 +20,7 @@ type BinAPI interface {
 	GetArgs() (int, []string)
 	GetModules() []Module
 	GetFunctions() []Function
+	GetData() []byte
 	GetSections() []Section
 	GetRelocAddr() *ImageBaseRelocation
 	GetDebugAddr() *DebugDirectory
@@ -142,6 +143,11 @@ func (c *Bin) GetHeaderSize() uint {
 func (c *Bin) GetAddr() uintptr {
 	return ptrValue(c.Address)
 }
+
+func (c *Bin) GetData() []byte {
+	return c.Data
+}
+
 func (c *Bin) GetArgs() (int, []string) {
 	return c.Argc, c.Argv
 }
