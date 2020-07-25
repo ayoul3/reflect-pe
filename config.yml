@@ -1,13 +1,8 @@
-#BinaryPath: 'res\stripped_go.exe'
-#BinaryPath: 'C:\Users\ayoul3\Documents\go\test\main.exe'
-#BinaryPath: 'res\cmdLineW.exe'
-#BinaryPath: 'res\sock_file.exe'
-#BinaryPath: 'res\sock_static_file.exe'
-BinaryPath: 'whatever.exe'
-ReflectArgs: 'heyho' # arg[0] is the program's name
+BinaryPath: 'whatever.exe' # http or path
+ReflectArgs: 'heyho' # (optional) first arg is the program's name
 ReflectMethod:  # wait, function or empty
-LogLevel: 2
-Keywords:
+LogLevel: 2  # 0 no log, 1 info, 2 debug
+Keywords:  # keywords to replace with shuffled version
   - mimikatz
   - delpy
   - benjamin
