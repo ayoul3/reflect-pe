@@ -1,9 +1,11 @@
 package lib
 
 import (
+	"bytes"
 	"debug/pe"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"regexp"
 	"time"
 	. "unsafe"
@@ -21,8 +23,9 @@ func CopyHeaders(api WinAPI, start, dst BinAPI) {
 }
 
 func RegisterNewSection(binary BinAPI, originalSection *pe.SectionHeader32) {
+	trimmedName := bytes.Trim(originalSection.Name[:], "\x00")
 	section := Section{
-		Name:    string(originalSection.Name[:]),
+		Name:    string(trimmedName),
 		Address: Pointer(binary.GetAddr() + uintptr(originalSection.VirtualAddress)),
 		RVA:     uintptr(originalSection.VirtualAddress),
 		RRA:     uintptr(originalSection.PointerToRawData),
@@ -199,6 +202,15 @@ func FixingHardcodedOffsets(api WinAPI, bin BinAPI) {
 	for _, section := range bin.GetSections() {
 		FixOffsetsInSection(api, bin, section)
 	}
+}
+
+func FixEntryPoint(api WinAPI, bin BinAPI) (err error) {
+	clrHeader := bin.GetCLRHeader()
+	fmt.Printf("%x\n", clrHeader)
+	fmt.Printf("%x", *(*uint64)(Pointer(bin.GetAddr() + uintptr(clrHeader.EntryPointRVA))))
+
+	os.Exit(0)
+	return nil
 }
 
 func StartThreadWait(api WinAPI, bin BinAPI, sleep bool) (err error) {

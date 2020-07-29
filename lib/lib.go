@@ -116,14 +116,18 @@ func CopyData() (err error) {
 	CopySections(Wapi, Binary, Final)
 	log.Infof("Copied %d sections to new location", len(Final.Sections))
 
-	err = LoadLibraries(Wapi, Final)
-	if err != nil {
+	if err = LoadLibraries(Wapi, Final); err != nil {
 		return err
 	}
+
+	if len(Final.Modules) == 0 {
+		log.Info("No imported DLLs to load")
+		return nil
+	}
+
 	log.Infof("Loaded %d DLLs", len(Final.Modules))
 
-	err = LoadFunctions(Wapi, Final)
-	if err != nil {
+	if err = LoadFunctions(Wapi, Final); err != nil {
 		return err
 	}
 	log.Infof("Loaded their functions")
@@ -138,6 +142,10 @@ func FixOffsets() (err error) {
 	} else {
 		log.Warn("Static pe file - Trying to manually fixing offsets - May break!")
 		FixingHardcodedOffsets(Wapi, Final)
+	}
+
+	if Final.IsManaged() {
+		return FixEntryPoint(Wapi, Final)
 	}
 	return nil
 }

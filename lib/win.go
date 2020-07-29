@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"debug/pe"
 	"syscall"
 	"unicode/utf16"
 	. "unsafe"
@@ -201,6 +202,22 @@ type ImageImportDescriptor struct {
 	ForwarderChain     uint32
 	Name               uint32
 	FirstThunk         uint32
+}
+
+const COMIMAGE_FLAGS_NATIVE_ENTRYPOINT = 0x00000010
+
+type ImageCor20Header struct {
+	cb                      uint32
+	MajorRuntimeVersion     uint16
+	MinorRuntimeVersion     uint16
+	MetaData                pe.DataDirectory
+	Flags                   uint32
+	EntryPointRVA           uint32
+	Resources               pe.DataDirectory
+	CodeManagerTable        pe.DataDirectory
+	VTableFixups            pe.DataDirectory
+	ExportAddressTableJumps pe.DataDirectory
+	ManagedNativeHeader     pe.DataDirectory
 }
 
 type DebugDirectory struct {

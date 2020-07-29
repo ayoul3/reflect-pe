@@ -21,6 +21,7 @@ type BinAPI interface {
 	GetModules() []Module
 	GetFunctions() []Function
 	GetData() []byte
+	GetCLRHeader() *ImageCor20Header
 	GetSections() []Section
 	GetRelocAddr() *ImageBaseRelocation
 	GetDebugAddr() *DebugDirectory
@@ -187,6 +188,7 @@ func (c *Bin) GetDebugAddr() *DebugDirectory {
 func (c *Bin) GetSizeOptionalHeader() uintptr {
 	return uintptr(c.FileHeader.SizeOfOptionalHeader)
 }
+
 func (c *Bin) GetModules() []Module {
 	return c.Modules
 }
@@ -199,8 +201,32 @@ func (c *Bin) GetSections() []Section {
 	return c.Sections
 }
 
+func (c *Bin) GetCLRHeader() *ImageCor20Header {
+	var offsetImport pe.DataDirectory
+	if c.Is64() {
+		offsetImport = c.OptionalHeader64.DataDirectory[pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR]
+	} else {
+		offsetImport = c.OptionalHeader32.DataDirectory[pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR]
+	}
+	offset := offsetImport.VirtualAddress
+	ptr := ptrOffset(c.Address, uintptr(offset))
+
+	return (*ImageCor20Header)(ptr)
+}
+
+/*
+func (c *Bin) getSectionAddr(name string) (Pointer, error) {
+	for _, s := range c.Sections {
+		if s.Name == name {
+			return s.Address, nil
+		}
+	}
+	return nil, fmt.Errorf("Could not find section %s", name)
+}
+*/
 func (c *Bin) GetEntryPoint() Pointer {
 	var entryPoint uint32
+
 	if c.Is64() {
 		entryPoint = c.OptionalHeader64.AddressOfEntryPoint
 	} else {
@@ -229,9 +255,22 @@ func (c *Bin) GetFirstImport() *ImageImportDescriptor {
 	} else {
 		offsetImport = c.OptionalHeader32.DataDirectory[pe.IMAGE_DIRECTORY_ENTRY_IMPORT]
 	}
+	if offsetImport.Size == 0 {
+		return &ImageImportDescriptor{}
+	}
 	offset := offsetImport.VirtualAddress
 	ptr := ptrOffset(c.Address, uintptr(offset))
 	return (*ImageImportDescriptor)(ptr)
+}
+
+func (c *Bin) IsManaged() bool {
+	var offsetImport pe.DataDirectory
+	if c.Is64() {
+		offsetImport = c.OptionalHeader64.DataDirectory[pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR]
+	} else {
+		offsetImport = c.OptionalHeader32.DataDirectory[pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR]
+	}
+	return offsetImport.Size > 0
 }
 
 func (c *Bin) TranslateToRVA(rawAddr uintptr) uintptr {
