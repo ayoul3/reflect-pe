@@ -18,6 +18,10 @@ func ptrValue(ptr Pointer) uintptr {
 	return uintptr(Pointer(ptr))
 }
 
+func uintAddr(addr interface{}) uintptr {
+	return uintptr(Pointer(&addr))
+}
+
 func uint16Val(ptr Pointer, offset uint) uint16 {
 	return *(*uint16)(Pointer(ptrValue(ptr) + uintptr(offset)))
 }

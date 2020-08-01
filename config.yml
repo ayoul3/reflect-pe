@@ -1,5 +1,6 @@
-BinaryPath: 'res/managed.exe' # http or path
-ReflectArgs: '' # (optional) first arg is the program's name
+#BinaryPath: 'res/managed.exe' # http or path
+BinaryPath: 'res/managed_noargs.exe' # http or path
+ReflectArgs:  # (optional) first arg is the program's name
 ReflectMethod:  # wait, function or empty
 LogLevel: 2  # 0 no log, 1 info, 2 debug
 Keywords:  # keywords to replace with shuffled version

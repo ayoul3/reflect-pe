@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ayoul3/reflect-pe/lib"
@@ -33,6 +35,14 @@ func main() {
 	err = lib.AllocateMemory()
 	if err != nil {
 		log.Fatalf("Could not allocate new memory for binary : %s", err)
+	}
+
+	if lib.IsManaged() {
+		fmt.Println("loading assembly")
+		if err = lib.LoadAssembly(config.ReflectArgs); err != nil {
+			log.Fatalf("Error loading assembly : %s", err)
+		}
+		return
 	}
 
 	err = lib.CopyData()

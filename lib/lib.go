@@ -8,6 +8,7 @@ import (
 
 	. "unsafe"
 
+	"github.com/ropnop/go-clr"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -144,10 +145,22 @@ func FixOffsets() (err error) {
 		FixingHardcodedOffsets(Wapi, Final)
 	}
 
-	if Final.IsManaged() {
-		return FixEntryPoint(Wapi, Final)
-	}
 	return nil
+}
+
+func IsManaged() bool {
+	return Binary.IsManaged()
+}
+
+func LoadAssembly(argv string) error {
+	//runtime.KeepAlive(Binary.Data)
+	params := []string{}
+	if len(argv) > 0 {
+		params = strings.Split(argv, " ")
+	}
+	_, err := clr.ExecuteByteArray(Binary.Data, params)
+	return err
+
 }
 
 func PrepareArguments(args string) (err error) {

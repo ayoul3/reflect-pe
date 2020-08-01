@@ -5,7 +5,6 @@ import (
 	"debug/pe"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"regexp"
 	"time"
 	. "unsafe"
@@ -202,15 +201,6 @@ func FixingHardcodedOffsets(api WinAPI, bin BinAPI) {
 	for _, section := range bin.GetSections() {
 		FixOffsetsInSection(api, bin, section)
 	}
-}
-
-func FixEntryPoint(api WinAPI, bin BinAPI) (err error) {
-	clrHeader := bin.GetCLRHeader()
-	fmt.Printf("%x\n", clrHeader)
-	fmt.Printf("%x", *(*uint64)(Pointer(bin.GetAddr() + uintptr(clrHeader.EntryPointRVA))))
-
-	os.Exit(0)
-	return nil
 }
 
 func StartThreadWait(api WinAPI, bin BinAPI, sleep bool) (err error) {

@@ -21,7 +21,6 @@ type BinAPI interface {
 	GetModules() []Module
 	GetFunctions() []Function
 	GetData() []byte
-	GetCLRHeader() *ImageCor20Header
 	GetSections() []Section
 	GetRelocAddr() *ImageBaseRelocation
 	GetDebugAddr() *DebugDirectory
@@ -31,6 +30,7 @@ type BinAPI interface {
 	TranslateToRVA(rawAddr uintptr) uintptr
 	GetEntryPoint() Pointer
 	IsDynamic() bool
+	IsManaged() bool
 	UpdateData(data []byte)
 }
 

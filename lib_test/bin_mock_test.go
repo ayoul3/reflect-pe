@@ -104,6 +104,10 @@ func (c *MockBin) GetEntryPoint() Pointer {
 	return Pointer(&i)
 }
 
+func (c *MockBin) IsManaged() bool {
+	return true
+}
+
 func (c *MockBin) AddSection(section lib.Section) {
 	c.Sections = append(c.Sections, section)
 }
