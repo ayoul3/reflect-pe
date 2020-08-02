@@ -104,7 +104,7 @@ func (obj *MethodInfo) GetType(pRetVal *uintptr) uintptr {
 }
 
 func (obj *MethodInfo) Invoke_3(variantObj Variant, parameters uintptr, pRetVal *uintptr) error {
-	_, _, err := syscall.Syscall6(
+	ret, _, _ := syscall.Syscall6(
 		obj.vtbl.Invoke_3,
 		4,
 		uintptr(unsafe.Pointer(obj)),
@@ -114,25 +114,16 @@ func (obj *MethodInfo) Invoke_3(variantObj Variant, parameters uintptr, pRetVal 
 		0,
 		0,
 	)
-	if err != syscall.Errno(0) {
-		return err
-	}
-	return nil
+	return checkOK(ret, "Load_3")
 }
 
-func (obj *MethodInfo) GetString() (unsafe.Pointer, error) {
-	ret, _, err := syscall.Syscall6(
+func (obj *MethodInfo) GetString(addr *uintptr) error {
+	ret, _, _ := syscall.Syscall(
 		obj.vtbl.get_ToString,
-		1,
+		2,
 		uintptr(unsafe.Pointer(obj)),
-		0,
-		0,
-		0,
-		0,
+		uintptr(unsafe.Pointer(addr)),
 		0,
 	)
-	if err != syscall.Errno(0) {
-		return nil, err
-	}
-	return unsafe.Pointer(ret), nil
+	return checkOK(ret, "get_ToString")
 }

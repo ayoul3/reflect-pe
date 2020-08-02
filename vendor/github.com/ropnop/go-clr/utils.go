@@ -6,6 +6,9 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"strings"
+	"unicode/utf16"
+	"unsafe"
 
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/transform"
@@ -33,4 +36,22 @@ func utf16Le(s string) []byte {
 	t := transform.NewWriter(&buf, enc)
 	t.Write([]byte(s))
 	return buf.Bytes()
+}
+
+func expectsParams(input string) bool {
+	return !strings.Contains(input, "Void Main()")
+}
+
+func readUnicodeStr(ptr unsafe.Pointer) string {
+	var byteVal uint16
+	out := make([]uint16, 0)
+	for i := 0; ; i++ {
+		byteVal = *(*uint16)(unsafe.Pointer(ptr))
+		if byteVal == 0x0000 {
+			break
+		}
+		out = append(out, byteVal)
+		ptr = unsafe.Pointer(uintptr(ptr) + 2)
+	}
+	return string(utf16.Decode(out))
 }

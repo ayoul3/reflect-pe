@@ -11,6 +11,7 @@ type Configuration struct {
 	BinaryPath    string   `yaml:"BinaryPath"`
 	ReflectArgs   string   `yaml:"ReflectArgs"`
 	ReflectMethod string   `yaml:"ReflectMethod"`
+	CLRRuntime    string   `yaml:"CLRRuntime"`
 	LogLevel      int64    `yaml:"LogLevel"`
 	Keywords      []string `yaml:"Keywords"`
 }
@@ -29,6 +30,9 @@ func GetConfig() *Configuration {
 
 	if config.BinaryPath == "" {
 		log.Fatal("BinaryPath is empty. Please configure a valid path in config.yml")
+	}
+	if config.CLRRuntime == "" {
+		config.CLRRuntime = "v2"
 	}
 
 	return &config

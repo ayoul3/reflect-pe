@@ -152,13 +152,12 @@ func IsManaged() bool {
 	return Binary.IsManaged()
 }
 
-func LoadAssembly(argv string) error {
-	//runtime.KeepAlive(Binary.Data)
+func LoadAssembly(runtime, argv string) error {
 	params := []string{}
 	if len(argv) > 0 {
 		params = strings.Split(argv, " ")
 	}
-	_, err := clr.ExecuteByteArray(Binary.Data, params)
+	_, err := clr.ExecuteByteArray(runtime, Binary.Data, params)
 	return err
 
 }

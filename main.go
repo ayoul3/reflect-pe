@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ayoul3/reflect-pe/lib"
@@ -38,8 +36,8 @@ func main() {
 	}
 
 	if lib.IsManaged() {
-		fmt.Println("loading assembly")
-		if err = lib.LoadAssembly(config.ReflectArgs); err != nil {
+		log.Infof("Assembly detected. Loading CLR")
+		if err = lib.LoadAssembly(config.CLRRuntime, config.ReflectArgs); err != nil {
 			log.Fatalf("Error loading assembly : %s", err)
 		}
 		return

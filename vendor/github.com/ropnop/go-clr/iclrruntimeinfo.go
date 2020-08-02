@@ -3,9 +3,10 @@
 package clr
 
 import (
-	"golang.org/x/sys/windows"
 	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 type ICLRRuntimeInfo struct {
@@ -92,7 +93,7 @@ func (obj *ICLRRuntimeInfo) GetInterface(rclsid *windows.GUID, riid *windows.GUI
 	return ret
 }
 
-func (obj *ICLRRuntimeInfo) BindAsLegacyV2Runtime() uintptr {
+func (obj *ICLRRuntimeInfo) BindAsLegacyV2Runtime() error {
 	ret, _, _ := syscall.Syscall(
 		obj.vtbl.BindAsLegacyV2Runtime,
 		1,
@@ -100,7 +101,7 @@ func (obj *ICLRRuntimeInfo) BindAsLegacyV2Runtime() uintptr {
 		0,
 		0,
 	)
-	return ret
+	return checkOK(ret, "BindAsLegacyV2Runtime")
 }
 
 func (obj *ICLRRuntimeInfo) IsLoadable(pbLoadable *bool) uintptr {

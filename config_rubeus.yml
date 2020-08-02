@@ -1,0 +1,6 @@
+BinaryPath: 'Rubeus.exe'
+ReflectArgs:  'currentluid'
+ReflectMethod:
+CLRRuntime: v2 # v2, v4. Default to v2
+LogLevel: 2  # 0 no log, 1 info, 2 debug
+Keywords:  # keywords to replace with shuffled version

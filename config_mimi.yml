@@ -1,0 +1,40 @@
+BinaryPath: 'mimikatz.exe' # or http://www.repo.com/mimikatz.exe
+ReflectArgs: 'heyho coffee' # arg[0] is the program's name
+ReflectMethod:  
+LogLevel: 1
+Keywords: # keywords to replace with their shuffled version
+  - mimikatz
+  - delpy
+  - benjamin
+  - delpy
+  - vincent
+  - le toux
+  - letoux
+  - amour
+  - la vie
+  - gentilkiwi
+  - kiwi
+  - creativecommons
+  - ".#####."
+  - ".####."
+  - ".## ^ ##."
+  - "## v ##"
+  - pingcastle
+  - mysmartlogon
+  - sekurlsa
+  - wdigest
+  - tspkg
+  - livessp
+  - logonPasswords
+  - dpapisystem
+  - backupkeys
+  - dcshadow
+  - changentlm
+  - dcsync
+  - netsync
+  - lsadump
+  - minesweeper
+  - busylight
+  - sysenv
+  - kerberos
+  - vault
