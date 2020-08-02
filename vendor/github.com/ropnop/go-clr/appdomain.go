@@ -145,12 +145,12 @@ func (obj *AppDomain) GetHashCode() uintptr {
 	return ret
 }
 
-func (obj *AppDomain) Load_3(pRawAssembly uintptr, asmbly *uintptr) error {
+func (obj *AppDomain) Load_3(pRawAssembly uintptr, asmbly *uintptr) uintptr {
 	ret, _, _ := syscall.Syscall(
 		obj.vtbl.Load_3,
 		3,
 		uintptr(unsafe.Pointer(obj)),
 		uintptr(unsafe.Pointer(pRawAssembly)),
 		uintptr(unsafe.Pointer(asmbly)))
-	return checkOK(ret, "Load_3")
+	return ret
 }

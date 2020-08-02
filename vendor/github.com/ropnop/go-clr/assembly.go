@@ -3,10 +3,9 @@
 package clr
 
 import (
+	"golang.org/x/sys/windows"
 	"syscall"
 	"unsafe"
-
-	"golang.org/x/sys/windows"
 )
 
 // from mscorlib.tlh
@@ -67,7 +66,6 @@ type AssemblyVtbl struct {
 	GetModule                   uintptr
 	GetReferencedAssemblies     uintptr
 	get_GlobalAssemblyCache     uintptr
-	custom                      [256]uint32
 }
 
 func NewAssemblyFromPtr(ppv uintptr) *Assembly {

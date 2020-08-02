@@ -103,7 +103,7 @@ func (obj *MethodInfo) GetType(pRetVal *uintptr) uintptr {
 	return ret
 }
 
-func (obj *MethodInfo) Invoke_3(variantObj Variant, parameters uintptr, pRetVal *uintptr) error {
+func (obj *MethodInfo) Invoke_3(variantObj Variant, parameters uintptr, pRetVal *uintptr) uintptr {
 	ret, _, _ := syscall.Syscall6(
 		obj.vtbl.Invoke_3,
 		4,
@@ -114,7 +114,7 @@ func (obj *MethodInfo) Invoke_3(variantObj Variant, parameters uintptr, pRetVal 
 		0,
 		0,
 	)
-	return checkOK(ret, "Load_3")
+	return ret
 }
 
 func (obj *MethodInfo) GetString(addr *uintptr) error {

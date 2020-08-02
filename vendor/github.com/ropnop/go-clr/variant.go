@@ -12,6 +12,7 @@ type Variant struct {
 	wReserved2 uint16
 	wReserved3 uint16
 	Val        uintptr
+	_          [8]byte
 }
 
 func NewVariantFromPtr(ppv uintptr) *Variant {

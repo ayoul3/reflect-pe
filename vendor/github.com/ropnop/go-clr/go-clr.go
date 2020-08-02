@@ -9,8 +9,6 @@ import (
 	"strings"
 	"syscall"
 	"unsafe"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // GetInstallRuntimes is a wrapper function that returns an array of installed runtimes. Requires an existing ICLRMetaHost
@@ -129,7 +127,6 @@ func ExecuteByteArray(targetRuntime string, rawBytes []byte, params []string) (r
 			latestRuntime = r
 		}
 	}
-	log.Debugf("Using runtime %s", latestRuntime)
 	runtimeInfo, err := GetRuntimeInfo(metahost, latestRuntime)
 	if err != nil {
 		return
@@ -140,7 +137,6 @@ func ExecuteByteArray(targetRuntime string, rawBytes []byte, params []string) (r
 	if err != nil {
 		return
 	}
-
 	if !isLoadable {
 		return -1, fmt.Errorf("%s is not loadable for some reason", latestRuntime)
 	}
@@ -157,19 +153,19 @@ func ExecuteByteArray(targetRuntime string, rawBytes []byte, params []string) (r
 		return
 	}
 	var pAssembly uintptr
-	if err = appDomain.Load_3(uintptr(safeArrayPtr), &pAssembly); err != nil {
+	hr = appDomain.Load_3(uintptr(safeArrayPtr), &pAssembly)
+	err = checkOK(hr, "appDomain.Load_3")
+	if err != nil {
 		return
 	}
 	assembly := NewAssemblyFromPtr(pAssembly)
 	var pEntryPointInfo uintptr
-
 	hr = assembly.GetEntryPoint(&pEntryPointInfo)
 	err = checkOK(hr, "assembly.GetEntryPoint")
 	if err != nil {
 		return
 	}
 	methodInfo := NewMethodInfoFromPtr(pEntryPointInfo)
-	var pRetCode uintptr
 
 	var methodSignaturePtr, paramPtr uintptr
 	err = methodInfo.GetString(&methodSignaturePtr)
@@ -185,18 +181,18 @@ func ExecuteByteArray(targetRuntime string, rawBytes []byte, params []string) (r
 		}
 	}
 
+	var pRetCode uintptr
 	nullVariant := Variant{
 		VT:  1,
 		Val: uintptr(0),
 	}
-
-	err = methodInfo.Invoke_3(
+	hr = methodInfo.Invoke_3(
 		nullVariant,
 		paramPtr,
 		&pRetCode)
-
+	err = checkOK(hr, "methodInfo.Invoke_3")
 	if err != nil {
-		return -1, err
+		return
 	}
 	appDomain.Release()
 	runtimeHost.Release()
