@@ -108,6 +108,14 @@ func (c *MockBin) IsManaged() bool {
 	return true
 }
 
+func (c *MockBin) GetArguments() []string {
+	return []string{"arg0", "arg1"}
+}
+
+func (c *MockBin) SetArguments([]string) {
+
+}
+
 func (c *MockBin) AddSection(section lib.Section) {
 	c.Sections = append(c.Sections, section)
 }

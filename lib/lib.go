@@ -8,14 +8,7 @@ import (
 
 	. "unsafe"
 
-	"github.com/ropnop/go-clr"
 	log "github.com/sirupsen/logrus"
-)
-
-var (
-	Binary *Bin
-	Final  *Bin
-	Wapi   *Win
 )
 
 type ArgInjector func(addr uintptr, api WinAPI, bin BinAPI) error
@@ -77,7 +70,7 @@ func NewBinaryFromPath(path string) (*Bin, error) {
 	return NewBinaryFromDisk(path)
 }
 
-func NewBinary(api *Win, size uint) (*Bin, error) {
+func NewBinary(api WinAPI, size uint) (*Bin, error) {
 	addr, err := api.VirtualAlloc(size)
 	if err != nil {
 		return nil, err
@@ -85,50 +78,56 @@ func NewBinary(api *Win, size uint) (*Bin, error) {
 	return &Bin{Address: Pointer(addr)}, nil
 }
 
-func ObfuscateStrings(blacklist []string) {
+func ObfuscateStrings(bin BinAPI, blacklist []string) {
 	log.Infof("Replapcing %d keywords", len(blacklist))
 
 	for _, word := range blacklist {
-		ReplaceWord(Binary, word)
+		ReplaceWord(bin, word)
 	}
 }
 
-func AllocateMemory() (err error) {
-	log.Infof("Loaded initial binary at address 0x%x", Binary.Address)
+func AppendArgs(bin BinAPI, args string) {
+	var splittedArgs []string
+	if len(args) > 0 {
+		splittedArgs = strings.Split(args, " ")
+	}
+	bin.SetArguments(splittedArgs)
+}
 
-	ParsePEHeaders(Binary)
+func AllocateMemory(api WinAPI, bin BinAPI) (final BinAPI, err error) {
+	log.Infof("Loaded initial binary at address 0x%x", bin.GetAddr())
 
-	Final, err = NewBinary(Wapi, Binary.GetImageSize())
+	final, err = NewBinary(api, bin.GetImageSize())
 	if err != nil {
-		return err
+		return
 	}
 
-	log.Infof("Allocated new space for binary at address: 0x%x", Final.Address)
+	log.Infof("Allocated new space for binary at address: 0x%x", final.GetAddr())
 
-	return nil
+	return final, nil
 }
 
-func CopyData() (err error) {
-	CopyHeaders(Wapi, Binary, Final)
-	log.Infof("Copied %d bytes of headers to new location", Binary.GetHeaderSize())
+func CopyData(api WinAPI, bin, final BinAPI) (err error) {
+	CopyHeaders(api, bin, final)
+	log.Infof("Copied %d bytes of headers to new location", bin.GetHeaderSize())
 
-	ParsePEHeaders(Final)
+	ParsePEHeaders(final)
+	CopyArguments(bin, final)
+	CopySections(api, bin, final)
+	log.Infof("Copied %d sections to new location", len(final.GetSections()))
 
-	CopySections(Wapi, Binary, Final)
-	log.Infof("Copied %d sections to new location", len(Final.Sections))
-
-	if err = LoadLibraries(Wapi, Final); err != nil {
+	if err = LoadLibraries(api, final); err != nil {
 		return err
 	}
 
-	if len(Final.Modules) == 0 {
+	if len(final.GetModules()) == 0 {
 		log.Info("No imported DLLs to load")
 		return nil
 	}
 
-	log.Infof("Loaded %d DLLs", len(Final.Modules))
+	log.Infof("Loaded %d DLLs", len(final.GetModules()))
 
-	if err = LoadFunctions(Wapi, Final); err != nil {
+	if err = LoadFunctions(api, final); err != nil {
 		return err
 	}
 	log.Infof("Loaded their functions")
@@ -136,64 +135,48 @@ func CopyData() (err error) {
 	return nil
 }
 
-func FixOffsets() (err error) {
+func FixOffsets(api WinAPI, final BinAPI) (err error) {
 
-	if Final.IsDynamic() {
-		FixRelocations(Wapi, Final)
+	if final.IsDynamic() {
+		FixRelocations(api, final)
 	} else {
 		log.Warn("Static pe file - Trying to manually fixing offsets - May break!")
-		FixingHardcodedOffsets(Wapi, Final)
+		FixingHardcodedOffsets(api, final)
 	}
 
 	return nil
 }
 
-func IsManaged() bool {
-	return Binary.IsManaged()
-}
-
-func LoadAssembly(runtime, argv string) error {
-	params := []string{}
-	if len(argv) > 0 {
-		params = strings.Split(argv, " ")
-	}
-	_, err := clr.ExecuteByteArray(runtime, Binary.Data, params)
-	return err
-
-}
-
-func PrepareArguments(args string) (err error) {
-	if len(args) < 1 {
+func PrepareArguments(api WinAPI, final BinAPI) (err error) {
+	if len(final.GetArguments()) < 1 {
 		return nil
 	}
-	Final.Argv = strings.Split(args, " ")
-	Final.Argc = len(Final.Argv)
 
 	log.Infof("Injecting arguments")
-	for _, function := range Final.GetFunctions() {
+	for _, function := range final.GetFunctions() {
 		if injectorFunc, ok := ArgInjectors[function.Name]; ok {
 			log.Infof("Calling args injector for: %s\n", function.Name)
-			injectorFunc(function.Address, Wapi, Final)
+			injectorFunc(function.Address, api, final)
 		}
 	}
 
 	return err
 }
 
-func Execute(method string) (err error) {
+func Execute(api WinAPI, final BinAPI, method string) (err error) {
 
 	//*(*uint32)(Final.GetEntryPoint()) = 0xCCCCCCCC
 
-	UpdateSectionProtections(Wapi, Final)
+	UpdateSectionProtections(api, final)
 	log.Infof("Updated memory protections")
 
 	switch method {
 	case "function":
-		err = ExecuteInFunction(Wapi, Final)
+		err = ExecuteInFunction(api, final)
 	case "wait":
-		err = StartThreadWait(Wapi, Final, true)
+		err = StartThreadWait(api, final, true)
 	default:
-		err = StartThreadWait(Wapi, Final, false)
+		err = StartThreadWait(api, final, false)
 	}
 
 	if err != nil {

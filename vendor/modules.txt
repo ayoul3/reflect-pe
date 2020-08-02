@@ -47,6 +47,9 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
+# github.com/pkg/errors v0.9.1
+## explicit
+github.com/pkg/errors
 # github.com/ropnop/go-clr v0.0.0-20200316142001-23e1d165e176 => github.com/ayoul3/go-clr v0.0.0-20200802103252-14ad5e608aad
 ## explicit
 github.com/ropnop/go-clr

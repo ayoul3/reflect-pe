@@ -17,8 +17,12 @@ func ParsePEHeaders(bin BinAPI) {
 	bin.FillOptionalHeader()
 }
 
-func CopyHeaders(api WinAPI, start, dst BinAPI) {
-	api.Memcopy(start.GetAddr(), dst.GetAddr(), uintptr(start.GetHeaderSize()))
+func CopyHeaders(api WinAPI, src, dst BinAPI) {
+	api.Memcopy(src.GetAddr(), dst.GetAddr(), uintptr(src.GetHeaderSize()))
+}
+
+func CopyArguments(src, dst BinAPI) {
+	dst.SetArguments(src.GetArguments())
 }
 
 func RegisterNewSection(binary BinAPI, originalSection *pe.SectionHeader32) {

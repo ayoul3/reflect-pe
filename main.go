@@ -12,7 +12,7 @@ var (
 
 func init() {
 
-	config = lib.GetConfig()
+	config := lib.GetConfig()
 	config.SetLogLevel()
 
 }
@@ -20,42 +20,16 @@ func init() {
 func main() {
 	var err error
 
-	lib.Wapi = lib.NewWinAPI()
-	lib.Binary, err = lib.NewBinaryFromPath(config.BinaryPath)
+	wapi := lib.NewWinAPI()
+	binary, err := lib.NewBinaryFromPath(config.BinaryPath)
+
 	if err != nil {
 		log.Fatalf("Could not load binary from %s: %s", config.BinaryPath, err)
 	}
 
-	if len(config.Keywords) > 0 {
-		lib.ObfuscateStrings(config.Keywords)
-	}
+	lib.PreparePE(binary, config)
 
-	err = lib.AllocateMemory()
-	if err != nil {
-		log.Fatalf("Could not allocate new memory for binary : %s", err)
+	if err = lib.Reflect(wapi, binary, config); err != nil {
+		log.Fatal(err)
 	}
-
-	if lib.IsManaged() {
-		log.Infof("Assembly detected. Loading CLR")
-		if err = lib.LoadAssembly(config.CLRRuntime, config.ReflectArgs); err != nil {
-			log.Fatalf("Error loading assembly : %s", err)
-		}
-		return
-	}
-
-	err = lib.CopyData()
-	if err != nil {
-		log.Fatalf("Could not copy data to new memory location : %s", err)
-	}
-
-	err = lib.FixOffsets()
-	if err != nil {
-		log.Fatalf("Could not fix some offsets : %s", err)
-	}
-
-	err = lib.PrepareArguments(config.ReflectArgs)
-	if err != nil {
-		log.Fatalf("Could not inject arguments : %s", err)
-	}
-	lib.Execute(config.ReflectMethod)
 }

@@ -32,6 +32,8 @@ type BinAPI interface {
 	IsDynamic() bool
 	IsManaged() bool
 	UpdateData(data []byte)
+	SetArguments(args []string)
+	GetArguments() []string
 }
 
 type Bin struct {
@@ -88,6 +90,15 @@ func (c *Bin) IsDynamic() bool {
 func (c *Bin) FillFileHeader() {
 	fileHeaderOffset := uint16Val(c.Address, 0x3C)
 	c.FileHeader = (*pe.FileHeader)(ptrOffset(c.Address, uintptr(fileHeaderOffset+4)))
+}
+
+func (c *Bin) SetArguments(args []string) {
+	c.Argv = args
+	c.Argc = len(args)
+}
+
+func (c *Bin) GetArguments() []string {
+	return c.Argv
 }
 
 func (c *Bin) FillOptionalHeader() {

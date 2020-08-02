@@ -1,10 +1,11 @@
-BinaryPath: 'file.exe' # http or local path
+BinaryPath: 'res\managed_noargs.exe' # http or local path
 
 # If c# assembly (optional) arg0 is the program's name
 # if unmanaged, arg0 is the real first argument
-ReflectArgs:  'arg0 arg1 arg2' # string
+ReflectArgs:  'arg0 coffee' # string
 
 ReflectMethod:  # wait, function or empty (only valid for unmanaged PE)
 CLRRuntime: v2 # v2 or v4. Default to v2 if empty. (only valid for managed PE)
 LogLevel: 2  # 0 no log, 1 info, 2 debug
 Keywords:  # keywords to replace with shuffled version
+  - mimikatz
