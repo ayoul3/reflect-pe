@@ -12,7 +12,7 @@ var (
 
 func init() {
 
-	config := lib.GetConfig()
+	config = lib.GetConfig()
 	config.SetLogLevel()
 
 }

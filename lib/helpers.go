@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"time"
 	"unicode/utf16"
 	. "unsafe"
@@ -157,4 +159,28 @@ func parseFuncAddress(api WinAPI, base, offset uintptr) (Pointer, string) {
 	ptrName := Pointer(&pImageImportByName.Name)
 	funcName := string(api.CstrVal(ptrName))
 	return ptrName, funcName
+}
+
+var Headers = map[string]string{
+	"accept":                    "text/html,application/xhtml+xml,application/xml;q=0.6,image/webp,*/*;q=0.5",
+	"user-agent":                "Mozilla/5.0 (Windows NT 8.0; Win64; x64; rv:69.0) Gecko/20100115 Firefox/89.85",
+	"accept-language":           "en-US,en;q=0.5",
+	"accept-encoding":           "gzip, deflate",
+	"dnt":                       "1",
+	"connection":                "close",
+	"upgrade-insecure-requests": "1",
+}
+
+func httpGet(path string) ([]byte, error) {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", path, nil)
+	for key, value := range Headers {
+		req.Header.Set(key, value)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return ioutil.ReadAll(resp.Body)
 }

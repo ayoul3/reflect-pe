@@ -8,4 +8,5 @@ ReflectMethod:  # wait, function or empty (only valid for unmanaged PE)
 CLRRuntime: v2 # v2 or v4. Default to v2 if empty. (only valid for managed PE)
 LogLevel: 2  # 0 no log, 1 info, 2 debug
 Keywords:  # keywords to replace with shuffled version
-  - mimikatz
+  - forbiddenWord
+  - badword

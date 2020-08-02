@@ -3,7 +3,6 @@ package lib
 import (
 	"errors"
 	"io/ioutil"
-	"net/http"
 	"strings"
 
 	. "unsafe"
@@ -51,16 +50,15 @@ func NewBinaryFromDisk(path string) (*Bin, error) {
 
 func NewBinaryFromHTTP(path string) (*Bin, error) {
 	var body []byte
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", path, nil)
-	resp, err := client.Do(req)
-	if err != nil {
+	var err error
+
+	if body, err = httpGet(path); err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-	body, err = ioutil.ReadAll(resp.Body)
-
-	return &Bin{Address: Pointer(&body[0])}, nil
+	if body[0] != 77 || body[1] != 90 {
+		return nil, errors.New("Not a valid PE file")
+	}
+	return &Bin{Address: Pointer(&body[0]), Data: body}, nil
 }
 
 func NewBinaryFromPath(path string) (*Bin, error) {

@@ -2,6 +2,8 @@ package lib
 
 import (
 	"io/ioutil"
+	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -16,10 +18,21 @@ type Configuration struct {
 	Keywords      []string `yaml:"Keywords"`
 }
 
+func getConfigContent() ([]byte, error) {
+	configPath := "config.yml"
+	if len(os.Args) > 1 {
+		configPath = os.Args[1]
+	}
+	if strings.HasPrefix(configPath, "http") {
+		return httpGet(configPath)
+	}
+	return ioutil.ReadFile(configPath)
+}
+
 func GetConfig() *Configuration {
 	var config Configuration
 
-	yamlFile, err := ioutil.ReadFile("config.yml")
+	yamlFile, err := getConfigContent()
 	if err != nil {
 		log.Fatalf("Error when reading config.yml: %s", err)
 	}
@@ -31,6 +44,7 @@ func GetConfig() *Configuration {
 	if config.BinaryPath == "" {
 		log.Fatal("BinaryPath is empty. Please configure a valid path in config.yml")
 	}
+
 	if config.CLRRuntime == "" {
 		config.CLRRuntime = "v2"
 	}
