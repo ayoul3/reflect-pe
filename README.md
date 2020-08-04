@@ -7,16 +7,18 @@ Finally, it produces a self-contained executable so no ugly command lines to be 
 **Supports x64 both unmanaged PE and managed PE (assemblies)**
 
 ## Usage  
-1. [Prepare a Go environment](https://golang.org/dl/) to build the reflect-pe on Windows. You cannot cross compile it on a Linux/Unix machine because it uses Windows specific code.  
+1. [Prepare a Go environment](https://golang.org/dl/) to build the reflect-pe. 
 
 2. Prepare your `config.yml` file (see below)
 
-3. Build the executable
+3. Build the executable  
+*Ps: if you you compile on a machine other than Windows, set these env variables: GOOS=windows GOARCH=amd64*
 ```bat
 git clone https://github.com/ayoul3/reflect-pe
 cd reflect-pe
 go build -v .
 ```
+
 Run it and enjoy
 ```bat
 reflect-pe.exe
@@ -70,4 +72,4 @@ I did not try loading a DLL. There may be some small adjustments that are needed
 ## Credit
 * https://github.com/stephenfewer/ReflectiveDLLInjection  
 * https://github.com/PowerShellMafia/PowerSploit/blob/master/CodeExecution/Invoke-ReflectivePEInjection.ps1
-* Huge thanks to https://github.com/ropnop/go-clr for 90% of the CLR loading in Go
+* Huge thanks to @ropnop (https://github.com/ropnop/go-clr) for 90% of the CLR loading in Go
